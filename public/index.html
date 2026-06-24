@@ -16,7 +16,6 @@
         #message { margin-top: 15px; font-weight: bold; font-size: 14px; }
         #username-group { display: none; }
 
-        /* VERSION CONTROLLER FOOTER STYLING */
         .version-stamp {
             position: fixed;
             bottom: 16px;
@@ -50,12 +49,13 @@
         <p id="message"></p>
     </div>
 
-    <div class="version-stamp">v1.1.0</div>
+    <div class="version-stamp">v1.1.1</div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
-        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+        // ADDED EXTRA FIRESTORE QUERY TOOLS HERE
+        import { getFirestore, doc, setDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDHBQ20Oan5NYyVbyf-0PMrIBGSNJKLYNY",
@@ -97,7 +97,8 @@
             messageDisplay.innerText = "";
         });
 
-        authBtn.addEventListener('click', () => {
+        // TURNED THIS ASYNC FOR THE DATABASE SCAN
+        authBtn.addEventListener('click', async () => {
             const email = emailInput.value.trim();
             const password = passwordInput.value;
             const username = usernameInput.value.trim();
@@ -137,29 +138,36 @@
                     return;
                 }
 
-                createUserWithEmailAndPassword(auth, email, password)
-                    .then((userCredential) => {
-                        const user = userCredential.user;
-                        
-                        return updateProfile(user, { displayName: username }).then(() => {
-                            return setDoc(doc(db, "users", user.uid), {
-                                username: username,
-                                email: email,
-                                role: "student"
-                            });
-                        });
-                    })
-                    .then(() => {
-                        messageDisplay.innerText = "Account verified! Launching dashboard layout...";
-                        messageDisplay.style.color = "#27ae60";
-                        
-                        // NEW AUTOMATIC REDIRECT PIPELINE
-                        window.location.href = "/dashboard";
-                    })
-                    .catch((error) => {
-                        messageDisplay.innerText = "Error: " + error.message;
+                try {
+                    // LIVE UNIQUE USERNAME SCAN
+                    const q = query(collection(db, "users"), where("username", "==", username));
+                    const querySnapshot = await getDocs(q);
+
+                    if (!querySnapshot.empty) {
+                        messageDisplay.innerText = "Error: This username is already taken! Try another one.";
                         messageDisplay.style.color = "#c0392b";
+                        return; // Blocks registration entirely
+                    }
+
+                    // Proceed only if name is completely unique
+                    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                    const user = userCredential.user;
+                    
+                    await updateProfile(user, { displayName: username });
+                    await setDoc(doc(db, "users", user.uid), {
+                        username: username,
+                        email: email,
+                        role: "student"
                     });
+
+                    messageDisplay.innerText = "Account verified! Launching dashboard layout...";
+                    messageDisplay.style.color = "#27ae60";
+                    window.location.href = "/dashboard";
+
+                } catch (error) {
+                    messageDisplay.innerText = "Error: " + error.message;
+                    messageDisplay.style.color = "#c0392b";
+                }
             }
         });
     </script>

@@ -71,7 +71,6 @@
 
         .version-sidebar-stamp { font-size: 11px; font-weight: 600; color: #475569; font-family: monospace; margin-top: auto; margin-bottom: 4px; letter-spacing: 0.5px; user-select: none; }
         
-        /* NEW: Teacher Verification Trigger Link design */
         .teacher-upgrade-link { font-size: 12px; color: #64748b; text-decoration: none; font-weight: 600; margin-bottom: 16px; cursor: pointer; transition: color 0.2s; display: inline-flex; align-items: center; gap: 4px; }
         .teacher-upgrade-link:hover { color: var(--accent-green); }
 
@@ -87,11 +86,14 @@
         .modal-title { font-size: 20px; font-weight: 700; color: #0f172a; margin-bottom: 8px; }
         .modal-msg { font-size: 14px; color: var(--text-muted); line-height: 1.5; margin-bottom: 16px; }
         
-        /* NEW: Form Input fields inside the security popup dialog layout */
-        .modal-input-group { display: flex; flex-direction: column; gap: 8px; text-align: left; margin-bottom: 20px; }
-        .modal-input-group label { font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; }
-        .modal-field { padding: 10px 14px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 14px; outline: none; transition: border 0.2s; }
+        /* Form Input fields inside verification window */
+        .modal-custom-form { display: flex; flex-direction: column; gap: 8px; text-align: left; margin-bottom: 12px; }
+        .modal-custom-form label { font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; }
+        .modal-field { padding: 10px 14px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 14px; outline: none; transition: border 0.2s; margin-bottom: 8px; width: 100%; box-sizing: border-box; }
         .modal-field:focus { border-color: var(--accent-blue); }
+
+        /* Inline Error Display Area */
+        .modal-error-display { color: var(--accent-red); font-size: 13px; font-weight: 600; text-align: center; margin-bottom: 16px; background: #fef2f2; border: 1px solid #fee2e2; padding: 8px 12px; border-radius: 8px; display: none; }
 
         .modal-actions { display: flex; gap: 12px; justify-content: center; }
         .btn-modal { padding: 10px 20px; border-radius: 8px; font-weight: 600; font-size: 14px; cursor: pointer; border: none; min-width: 100px; }
@@ -118,14 +120,14 @@
             <div id="modal-title" class="modal-title">System Status</div>
             <div id="modal-message" class="modal-msg">Loading request nodes...</div>
             
-            <div id="modal-custom-form" style="display: none;">
-                <div class="modal-input-group">
-                    <label>Choose Teacher Username</label>
-                    <input type="text" id="form-teacher-user" class="modal-field" placeholder="e.g., Professor_Biscuit">
-                    <label style="margin-top: 10px;">Secret Verification Code</label>
-                    <input type="password" id="form-teacher-code" class="modal-field" placeholder="••••••••">
-                </div>
+            <div id="modal-custom-form" class="modal-custom-form" style="display: none;">
+                <label>Choose Teacher Username</label>
+                <input type="text" id="form-teacher-user" class="modal-field" placeholder="e.g., Professor_Biscuit">
+                <label>Secret Verification Code</label>
+                <input type="password" id="form-teacher-code" class="modal-field" placeholder="••••••••">
             </div>
+
+            <div id="modal-error-banner" class="modal-error-display"></div>
 
             <div class="modal-actions">
                 <button id="modal-cancel-btn" class="btn-modal btn-modal-cancel">Cancel</button>
@@ -193,7 +195,6 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
-        // ADDED: getDoc imported to allow the single verification lookup sequence
         import { getFirestore, doc, collection, query, where, onSnapshot, updateDoc, increment, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 
         const APP_VERSION = "v1.0.0";
@@ -274,14 +275,12 @@
                         } else {
                             banner.style.display = "none";
                         }
-                        // Keep upgrade button visible for students
                         document.getElementById('teacher-upgrade-anchor').style.display = "inline-flex";
                     }
 
                     if (userRole === "teacher") {
                         document.getElementById('teacher-zone').style.display = "block";
                         badge.style.backgroundColor = "var(--accent-green)";
-                        // Hide upgrade link if they are already verified teachers
                         document.getElementById('teacher-upgrade-anchor').style.display = "none";
                         if (!teacherMatrixListenerCancel) {
                             listenToStudentProfilesLive();
@@ -291,7 +290,6 @@
                     document.getElementById('app-loading').style.display = 'none';
                 }, (error) => {
                     console.error("Self layout stream capture failure:", error);
-                    document.getElementById('loading-status').innerText = `Live Stream Fault: ${error.message}`;
                 });
 
             } else {
@@ -351,34 +349,53 @@
             });
         }
 
-        // PORTAL BOX DIALOG TRIGGER ENGINE (With input support option)
-        function triggerPortalModal({ title, message, icon, confirmText, isDanger, showForm, onConfirm }) {
+        // CUSTOM MODAL ENGINE (Completely custom UI modal window)
+        function triggerPortalModal({ title, message, icon, confirmText, isDanger, showForm, showCancel, onConfirm }) {
             const overlay = document.getElementById('portal-modal');
             document.getElementById('modal-title').innerText = title;
             document.getElementById('modal-message').innerText = message;
             document.getElementById('modal-icon').innerText = icon || "ℹ️";
             
+            // Clean out old inline errors every time a modal loads up
+            const errBanner = document.getElementById('modal-error-banner');
+            errBanner.innerText = "";
+            errBanner.style.display = "none";
+            
             const formContainer = document.getElementById('modal-custom-form');
-            formContainer.style.display = showForm ? "block" : "none";
+            formContainer.style.display = showForm ? "flex" : "none";
             
             const confirmBtn = document.getElementById('modal-confirm-btn');
             confirmBtn.innerText = confirmText || "OK";
             confirmBtn.className = isDanger ? "btn-modal btn-modal-confirm danger" : "btn-modal btn-modal-confirm";
 
+            // If it's a simple notification alert (no clear option path), hide the cancel target button
+            const cancelBtn = document.getElementById('modal-cancel-btn');
+            cancelBtn.style.display = (showCancel === false) ? "none" : "inline-block";
+
             overlay.classList.add('active');
 
             confirmBtn.onclick = () => {
-                if (onConfirm) onConfirm();
+                if (onConfirm) {
+                    onConfirm();
+                } else {
+                    overlay.classList.remove('active');
+                }
             };
             
-            document.getElementById('modal-cancel-btn').onclick = () => {
+            cancelBtn.onclick = () => {
                 overlay.classList.remove('active');
             };
         }
 
-        // NEW: TEACHER UPGRADE LOOKUP SYSTEM (Protected entirely against F12 tools)
+        // TRIGGER INLINE FORM WARNING MESSAGE (Bans browser alert popups)
+        function flashModalError(errorMessage) {
+            const banner = document.getElementById('modal-error-banner');
+            banner.innerText = errorMessage;
+            banner.style.display = "block";
+        }
+
+        // TEACHER UPGRADE LOOKUP SYSTEM 
         window.openTeacherVerificationWizard = function() {
-            // Reset input text inside modal fields
             document.getElementById('form-teacher-user').value = "";
             document.getElementById('form-teacher-code').value = "";
 
@@ -388,42 +405,40 @@
                 icon: "🛠️",
                 confirmText: "Verify Identity",
                 showForm: true,
+                showCancel: true,
                 onConfirm: async () => {
                     const chosenUsername = document.getElementById('form-teacher-user').value.trim();
                     const enteredCode = document.getElementById('form-teacher-code').value.trim();
 
                     if (!chosenUsername || !enteredCode) {
-                        alert("Both input fields are strictly mandatory.");
+                        flashModalError("Validation Error: Both input fields are mandatory.");
                         return;
                     }
 
-                    // F12 PROTECTION INTERCEPT SEQUENCE:
-                    // We attempt to pull a document named EXACTLY whatever code they typed.
-                    // If they type a fake code, the query fails or returns empty. The real password is NEVER in the JS.
                     try {
                         const codeVerificationRef = doc(db, "teacher_codes", enteredCode);
                         const codeSnapshot = await getDoc(codeVerificationRef);
 
                         if (codeSnapshot.exists() && codeSnapshot.data().isValid === true) {
-                            // Valid Code Verified! Upgrade role parameters in database dynamically
                             await updateDoc(currentActiveUserRef, {
                                 username: chosenUsername,
                                 role: "teacher"
                             });
                             
-                            // Close modal overlay window completely
                             document.getElementById('portal-modal').classList.remove('active');
                             
                             triggerPortalModal({
                                 title: "Clearance Level Upgraded",
                                 message: `Identity verified successfully. Welcome to the portal faculty, @${chosenUsername}!`,
-                                icon: "✅"
+                                icon: "✅",
+                                confirmText: "Enter Portal",
+                                showCancel: false
                             });
                         } else {
-                            alert("CRITICAL LOG: Authentication token mismatch. Clearance rejected.");
+                            flashModalError("Access Denied: Invalid verification authorization code.");
                         }
                     } catch(err) {
-                        alert(`Verification Node Failure: ${err.message}`);
+                        flashModalError(`Network Error: ${err.message}`);
                     }
                 }
             });
@@ -435,12 +450,15 @@
                 message: `Are you sure you want to write an official system warning to @${username}'s active database token?`,
                 icon: "⚠️",
                 confirmText: "Issue Warning",
+                showCancel: true,
                 onConfirm: async () => {
                     try {
                         await updateDoc(doc(db, "users", uid), { warnings: increment(1) });
                         document.getElementById('portal-modal').classList.remove('active');
-                        triggerPortalModal({ title: "Operation Complete", message: `Warning written to @${username} successfully!`, icon: "✅" });
-                    } catch (err) { alert(err.message); }
+                        triggerPortalModal({ title: "Operation Complete", message: `Warning written to @${username} successfully!`, icon: "✅", showCancel: false });
+                    } catch (err) { 
+                        triggerPortalModal({ title: "Write Error", message: err.message, icon: "❌", showCancel: false });
+                    }
                 }
             });
         };
@@ -452,12 +470,15 @@
                 icon: "🚫",
                 confirmText: "Execute Lockout",
                 isDanger: true,
+                showCancel: true,
                 onConfirm: async () => {
                     try {
                         await updateDoc(doc(db, "users", uid), { isRestricted: true });
                         document.getElementById('portal-modal').classList.remove('active');
-                        triggerPortalModal({ title: "Access Revoked", message: `@${username} system account vector has been suspended.`, icon: "🔒" });
-                    } catch (err) { alert(err.message); }
+                        triggerPortalModal({ title: "Access Revoked", message: `@${username} system account vector has been suspended.`, icon: "🔒", showCancel: false });
+                    } catch (err) { 
+                        triggerPortalModal({ title: "Write Error", message: err.message, icon: "❌", showCancel: false });
+                    }
                 }
             });
         };
@@ -468,12 +489,15 @@
                 message: `Are you sure you want to restore workspace clearance coordinates for @${username}? They will be allowed access instantly.`,
                 icon: "🔓",
                 confirmText: "Lift Restriction",
+                showCancel: true,
                 onConfirm: async () => {
                     try {
                         await updateDoc(doc(db, "users", uid), { isRestricted: false });
                         document.getElementById('portal-modal').classList.remove('active');
-                        triggerPortalModal({ title: "Clearance Granted", message: `@${username} has been successfully unrestricted.`, icon: "✅" });
-                    } catch (err) { alert(err.message); }
+                        triggerPortalModal({ title: "Clearance Granted", message: `@${username} has been successfully unrestricted.`, icon: "✅", showCancel: false });
+                    } catch (err) { 
+                        triggerPortalModal({ title: "Write Error", message: err.message, icon: "❌", showCancel: false });
+                    }
                 }
             });
         };

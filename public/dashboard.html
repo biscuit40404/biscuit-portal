@@ -237,6 +237,7 @@
                         try {
                             await setDoc(currentActiveUserRef, {
                                 username: user.displayName || user.email.split('@')[0],
+                                usernameLowercase: (user.displayName || user.email.split('@')[0]).toLowerCase(),
                                 email: user.email,
                                 role: "student", 
                                 warnings: 0,
@@ -349,14 +350,13 @@
             });
         }
 
-        // CUSTOM MODAL ENGINE (Completely custom UI modal window)
+        // CUSTOM MODAL ENGINE
         function triggerPortalModal({ title, message, icon, confirmText, isDanger, showForm, showCancel, onConfirm }) {
             const overlay = document.getElementById('portal-modal');
             document.getElementById('modal-title').innerText = title;
             document.getElementById('modal-message').innerText = message;
             document.getElementById('modal-icon').innerText = icon || "ℹ️";
             
-            // Clean out old inline errors every time a modal loads up
             const errBanner = document.getElementById('modal-error-banner');
             errBanner.innerText = "";
             errBanner.style.display = "none";
@@ -368,7 +368,6 @@
             confirmBtn.innerText = confirmText || "OK";
             confirmBtn.className = isDanger ? "btn-modal btn-modal-confirm danger" : "btn-modal btn-modal-confirm";
 
-            // If it's a simple notification alert (no clear option path), hide the cancel target button
             const cancelBtn = document.getElementById('modal-cancel-btn');
             cancelBtn.style.display = (showCancel === false) ? "none" : "inline-block";
 
@@ -387,14 +386,13 @@
             };
         }
 
-        // TRIGGER INLINE FORM WARNING MESSAGE (Bans browser alert popups)
         function flashModalError(errorMessage) {
             const banner = document.getElementById('modal-error-banner');
             banner.innerText = errorMessage;
             banner.style.display = "block";
         }
 
-        // TEACHER UPGRADE LOOKUP SYSTEM 
+        // TEACHER UPGRADE LOOKUP SYSTEM
         window.openTeacherVerificationWizard = function() {
             document.getElementById('form-teacher-user').value = "";
             document.getElementById('form-teacher-code').value = "";
@@ -420,8 +418,10 @@
                         const codeSnapshot = await getDoc(codeVerificationRef);
 
                         if (codeSnapshot.exists() && codeSnapshot.data().isValid === true) {
+                            // FIX WORKED IN HERE SAFELY: 
                             await updateDoc(currentActiveUserRef, {
                                 username: chosenUsername,
+                                usernameLowercase: chosenUsername.toLowerCase(), 
                                 role: "teacher"
                             });
                             

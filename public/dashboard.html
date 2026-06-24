@@ -18,7 +18,7 @@
             --border-color: #e2e8f0;
         }
 
-        body { font-family: 'Inter', system-ui, sans-serif; background-color: var(--bg-main); margin: 0; padding: 0; display: none; }
+        body { font-family: 'Inter', system-ui, sans-serif; background-color: var(--bg-main); margin: 0; padding: 0; }
         .app-container { display: flex; min-height: 100vh; }
         
         .sidebar { width: 260px; background-color: var(--sidebar-bg); color: #ffffff; display: flex; flex-direction: column; padding: 24px; box-sizing: border-box; }
@@ -53,7 +53,6 @@
         .student-email { font-size: 12px; color: var(--text-muted); font-weight: normal; }
         .student-stats { font-size: 11px; color: var(--text-muted); margin-top: 2px; font-family: monospace; display: flex; gap: 12px; align-items: center; }
         
-        /* Status Display Components */
         .status-pill { display: inline-flex; align-items: center; gap: 6px; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; }
         .status-online { background: #d1fae5; color: #065f46; }
         .status-offline { background: #f1f5f9; color: #475569; }
@@ -61,19 +60,21 @@
         .status-online .status-dot { background: var(--accent-green); }
         .status-offline .status-dot { background: var(--text-muted); }
 
-        /* Row Action Terminal Targets */
         .control-buttons { display: flex; gap: 8px; }
         .btn-ctrl { padding: 8px 14px; border: none; border-radius: 6px; font-weight: 600; font-size: 12px; cursor: pointer; transition: background 0.2s; }
         .btn-warn { background: #fef3c7; color: var(--accent-warning); }
         .btn-warn:hover { background: #fde68a; }
         .btn-mute { background: #fee2e2; color: var(--accent-red); }
         .btn-mute:hover { background: #fecaca; }
-        
-        /* Unrestrict Action Button Aesthetics */
         .btn-unrestrict { background: #d1fae5; color: #065f46; }
         .btn-unrestrict:hover { background: #a7f3d0; }
 
-        .version-sidebar-stamp { font-size: 11px; font-weight: 600; color: #475569; font-family: monospace; margin-top: auto; margin-bottom: 12px; letter-spacing: 0.5px; user-select: none; }
+        .version-sidebar-stamp { font-size: 11px; font-weight: 600; color: #475569; font-family: monospace; margin-top: auto; margin-bottom: 4px; letter-spacing: 0.5px; user-select: none; }
+        
+        /* NEW: Teacher Verification Trigger Link design */
+        .teacher-upgrade-link { font-size: 12px; color: #64748b; text-decoration: none; font-weight: 600; margin-bottom: 16px; cursor: pointer; transition: color 0.2s; display: inline-flex; align-items: center; gap: 4px; }
+        .teacher-upgrade-link:hover { color: var(--accent-green); }
+
         .btn-logout { background-color: transparent; color: #ef4444; border: 1px solid #fee2e2; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; }
         .btn-logout:hover { background-color: #fef2f2; }
 
@@ -84,14 +85,20 @@
         .modal-overlay.active .modal-box { transform: scale(1); }
         .modal-icon { font-size: 44px; margin-bottom: 12px; }
         .modal-title { font-size: 20px; font-weight: 700; color: #0f172a; margin-bottom: 8px; }
-        .modal-msg { font-size: 14px; color: var(--text-muted); line-height: 1.5; margin-bottom: 24px; }
+        .modal-msg { font-size: 14px; color: var(--text-muted); line-height: 1.5; margin-bottom: 16px; }
+        
+        /* NEW: Form Input fields inside the security popup dialog layout */
+        .modal-input-group { display: flex; flex-direction: column; gap: 8px; text-align: left; margin-bottom: 20px; }
+        .modal-input-group label { font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; }
+        .modal-field { padding: 10px 14px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 14px; outline: none; transition: border 0.2s; }
+        .modal-field:focus { border-color: var(--accent-blue); }
+
         .modal-actions { display: flex; gap: 12px; justify-content: center; }
         .btn-modal { padding: 10px 20px; border-radius: 8px; font-weight: 600; font-size: 14px; cursor: pointer; border: none; min-width: 100px; }
         .btn-modal-confirm { background: var(--sidebar-bg); color: white; }
         .btn-modal-confirm.danger { background: var(--accent-red); }
         .btn-modal-cancel { background: #e2e8f0; color: var(--text-main); }
 
-        /* Lockout Mask Display Framework */
         .lockout-screen { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #0f172a; color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 99999; text-align: center; }
         .lockout-card { background: #1e293b; padding: 40px; border-radius: 16px; border: 1px solid #334155; max-width: 450px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
         .lockout-icon { font-size: 64px; margin-bottom: 16px; }
@@ -100,11 +107,26 @@
 </head>
 <body>
 
+    <div id="app-loading" style="position: fixed; top:0; left:0; width:100vw; height:100vh; background:#f8fafc; display:flex; flex-direction:column; justify-content:center; align-items:center; z-index:999999; font-family:system-ui, sans-serif;">
+        <div style="font-size: 24px; font-weight: 800; color: #0f172a; margin-bottom: 10px;">🍪 Biscuit Portal</div>
+        <div id="loading-status" style="color: #64748b; font-size: 14px; font-weight: 500; background: #e2e8f0; padding: 6px 16px; border-radius: 20px;">Initializing security engine nodes...</div>
+    </div>
+
     <div id="portal-modal" class="modal-overlay">
         <div class="modal-box">
             <div id="modal-icon" class="modal-icon">ℹ️</div>
             <div id="modal-title" class="modal-title">System Status</div>
             <div id="modal-message" class="modal-msg">Loading request nodes...</div>
+            
+            <div id="modal-custom-form" style="display: none;">
+                <div class="modal-input-group">
+                    <label>Choose Teacher Username</label>
+                    <input type="text" id="form-teacher-user" class="modal-field" placeholder="e.g., Professor_Biscuit">
+                    <label style="margin-top: 10px;">Secret Verification Code</label>
+                    <input type="password" id="form-teacher-code" class="modal-field" placeholder="••••••••">
+                </div>
+            </div>
+
             <div class="modal-actions">
                 <button id="modal-cancel-btn" class="btn-modal btn-modal-cancel">Cancel</button>
                 <button id="modal-confirm-btn" class="btn-modal btn-modal-confirm">Confirm</button>
@@ -122,6 +144,9 @@
             </ul>
             
             <div class="version-sidebar-stamp" id="dashboard-version-node">Loading...</div>
+            
+            <div id="teacher-upgrade-anchor" class="teacher-upgrade-link" onclick="openTeacherVerificationWizard()">🛠️ I'm a Teacher</div>
+            
             <button id="logout-btn" class="btn-logout">Log Out</button>
         </nav>
 
@@ -168,7 +193,8 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
-        import { getFirestore, doc, collection, query, where, onSnapshot, updateDoc, increment } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+        // ADDED: getDoc imported to allow the single verification lookup sequence
+        import { getFirestore, doc, collection, query, where, onSnapshot, updateDoc, increment, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 
         const APP_VERSION = "v1.0.0";
         document.getElementById('dashboard-version-node').innerText = `BUILD DEV_${APP_VERSION}`;
@@ -190,24 +216,43 @@
         let selfProfileListenerCancel = null;
         let teacherMatrixListenerCancel = null;
 
+        document.getElementById('loading-status').innerText = "Verifying security handshake credentials...";
+
         onAuthStateChanged(auth, async (user) => {
             if (user) {
+                document.getElementById('loading-status').innerText = "Mapping database path coordinates...";
                 currentActiveUserRef = doc(db, "users", user.uid);
                 
                 try {
-                    // Set status to online in database
                     await updateDoc(currentActiveUserRef, { isOnline: true });
                 } catch(e) {
-                    console.error("Failed to set online footprint presence:", e);
+                    console.warn("Pre-initial presence write bypassed.");
                 }
 
-                selfProfileListenerCancel = onSnapshot(currentActiveUserRef, (snapshot) => {
-                    if (!snapshot.exists()) return;
+                selfProfileListenerCancel = onSnapshot(currentActiveUserRef, async (snapshot) => {
+                    
+                    if (!snapshot.exists()) {
+                        document.getElementById('loading-status').innerText = "Registering default dashboard credentials...";
+                        try {
+                            await setDoc(currentActiveUserRef, {
+                                username: user.displayName || user.email.split('@')[0],
+                                email: user.email,
+                                role: "student", 
+                                warnings: 0,
+                                isRestricted: false,
+                                isOnline: true
+                            });
+                        } catch(err) {
+                            document.getElementById('loading-status').innerText = `Database Registry Fault: ${err.message}`;
+                        }
+                        return; 
+                    }
+                    
                     const userData = snapshot.data();
 
-                    // Real-time access lockout interceptor
                     if (userData.isRestricted === true) {
                         showLockoutScreen();
+                        document.getElementById('app-loading').style.display = 'none';
                         if (selfProfileListenerCancel) selfProfileListenerCancel();
                         if (teacherMatrixListenerCancel) teacherMatrixListenerCancel();
                         return;
@@ -229,19 +274,24 @@
                         } else {
                             banner.style.display = "none";
                         }
+                        // Keep upgrade button visible for students
+                        document.getElementById('teacher-upgrade-anchor').style.display = "inline-flex";
                     }
 
                     if (userRole === "teacher") {
                         document.getElementById('teacher-zone').style.display = "block";
                         badge.style.backgroundColor = "var(--accent-green)";
+                        // Hide upgrade link if they are already verified teachers
+                        document.getElementById('teacher-upgrade-anchor').style.display = "none";
                         if (!teacherMatrixListenerCancel) {
                             listenToStudentProfilesLive();
                         }
                     }
 
-                    document.body.style.display = "block";
+                    document.getElementById('app-loading').style.display = 'none';
                 }, (error) => {
-                    console.error("Self structural stream fail:", error);
+                    console.error("Self layout stream capture failure:", error);
+                    document.getElementById('loading-status').innerText = `Live Stream Fault: ${error.message}`;
                 });
 
             } else {
@@ -249,7 +299,6 @@
             }
         });
 
-        // LIVE DIRECTORY LISTENER MAP
         function listenToStudentProfilesLive() {
             const container = document.getElementById('students-container');
             const q = query(collection(db, "users"), where("role", "==", "student"));
@@ -276,7 +325,6 @@
                     const presenceClass = isOnline ? 'status-online' : 'status-offline';
                     const presenceText = isOnline ? 'Online' : 'Offline';
 
-                    // DYNAMIC ACTION BUTTON GENERATOR MASK
                     const securityActionButton = isRestricted
                         ? `<button class="btn-ctrl btn-unrestrict" onclick="unrestrictAccessLive('${sUid}', '${sName}')">🔓 Unrestrict</button>`
                         : `<button class="btn-ctrl btn-mute" onclick="restrictAccessLive('${sUid}', '${sName}')">🚫 Restrict Access</button>`;
@@ -299,30 +347,27 @@
                     container.appendChild(row);
                 });
             }, (error) => {
-                console.error("Roster synchronization drop:", error);
+                console.error("Administrative matrix directory drop:", error);
             });
         }
 
-        // CONTROL DIALOG ELEMENT WRAPPER UTILITY
-        function triggerPortalModal({ title, message, icon, confirmText, isDanger, onConfirm }) {
+        // PORTAL BOX DIALOG TRIGGER ENGINE (With input support option)
+        function triggerPortalModal({ title, message, icon, confirmText, isDanger, showForm, onConfirm }) {
             const overlay = document.getElementById('portal-modal');
             document.getElementById('modal-title').innerText = title;
             document.getElementById('modal-message').innerText = message;
             document.getElementById('modal-icon').innerText = icon || "ℹ️";
             
+            const formContainer = document.getElementById('modal-custom-form');
+            formContainer.style.display = showForm ? "block" : "none";
+            
             const confirmBtn = document.getElementById('modal-confirm-btn');
             confirmBtn.innerText = confirmText || "OK";
-            
-            if (isDanger) {
-                confirmBtn.className = "btn-modal btn-modal-confirm danger";
-            } else {
-                confirmBtn.className = "btn-modal btn-modal-confirm";
-            }
+            confirmBtn.className = isDanger ? "btn-modal btn-modal-confirm danger" : "btn-modal btn-modal-confirm";
 
             overlay.classList.add('active');
 
             confirmBtn.onclick = () => {
-                overlay.classList.remove('active');
                 if (onConfirm) onConfirm();
             };
             
@@ -331,21 +376,71 @@
             };
         }
 
-        // EXPOSED ADMINISTRATIVE EXECUTORS
+        // NEW: TEACHER UPGRADE LOOKUP SYSTEM (Protected entirely against F12 tools)
+        window.openTeacherVerificationWizard = function() {
+            // Reset input text inside modal fields
+            document.getElementById('form-teacher-user').value = "";
+            document.getElementById('form-teacher-code').value = "";
+
+            triggerPortalModal({
+                title: "Educator Clearance Registry",
+                message: "Please specify your preferred campus username and enter your unique verification authorization token key.",
+                icon: "🛠️",
+                confirmText: "Verify Identity",
+                showForm: true,
+                onConfirm: async () => {
+                    const chosenUsername = document.getElementById('form-teacher-user').value.trim();
+                    const enteredCode = document.getElementById('form-teacher-code').value.trim();
+
+                    if (!chosenUsername || !enteredCode) {
+                        alert("Both input fields are strictly mandatory.");
+                        return;
+                    }
+
+                    // F12 PROTECTION INTERCEPT SEQUENCE:
+                    // We attempt to pull a document named EXACTLY whatever code they typed.
+                    // If they type a fake code, the query fails or returns empty. The real password is NEVER in the JS.
+                    try {
+                        const codeVerificationRef = doc(db, "teacher_codes", enteredCode);
+                        const codeSnapshot = await getDoc(codeVerificationRef);
+
+                        if (codeSnapshot.exists() && codeSnapshot.data().isValid === true) {
+                            // Valid Code Verified! Upgrade role parameters in database dynamically
+                            await updateDoc(currentActiveUserRef, {
+                                username: chosenUsername,
+                                role: "teacher"
+                            });
+                            
+                            // Close modal overlay window completely
+                            document.getElementById('portal-modal').classList.remove('active');
+                            
+                            triggerPortalModal({
+                                title: "Clearance Level Upgraded",
+                                message: `Identity verified successfully. Welcome to the portal faculty, @${chosenUsername}!`,
+                                icon: "✅"
+                            });
+                        } else {
+                            alert("CRITICAL LOG: Authentication token mismatch. Clearance rejected.");
+                        }
+                    } catch(err) {
+                        alert(`Verification Node Failure: ${err.message}`);
+                    }
+                }
+            });
+        };
+
         window.issueWarningLive = function(uid, username) {
             triggerPortalModal({
                 title: "Confirm Disciplinary Warning",
                 message: `Are you sure you want to write an official system warning to @${username}'s active database token?`,
                 icon: "⚠️",
                 confirmText: "Issue Warning",
-                isDanger: false,
                 onConfirm: async () => {
                     try {
                         await updateDoc(doc(db, "users", uid), { warnings: increment(1) });
+                        document.getElementById('portal-modal').classList.remove('active');
                         triggerPortalModal({ title: "Operation Complete", message: `Warning written to @${username} successfully!`, icon: "✅" });
-                    } catch (err) {
-                        triggerPortalModal({ title: "Write Error", message: err.message, icon: "❌" });
-                    }
+                    } catch (err) { alert(err.message); }
                 }
             });
         };
@@ -360,29 +455,25 @@
                 onConfirm: async () => {
                     try {
                         await updateDoc(doc(db, "users", uid), { isRestricted: true });
+                        document.getElementById('portal-modal').classList.remove('active');
                         triggerPortalModal({ title: "Access Revoked", message: `@${username} system account vector has been suspended.`, icon: "🔒" });
-                    } catch (err) {
-                        triggerPortalModal({ title: "Write Error", message: err.message, icon: "❌" });
-                    }
+                    } catch (err) { alert(err.message); }
                 }
             });
         };
 
-        // UNRESTRICT OPERATOR: Clears suspension flag instantly
         window.unrestrictAccessLive = function(uid, username) {
             triggerPortalModal({
                 title: "Lift Student Profile Restriction",
                 message: `Are you sure you want to restore workspace clearance coordinates for @${username}? They will be allowed access instantly.`,
                 icon: "🔓",
                 confirmText: "Lift Restriction",
-                isDanger: false,
                 onConfirm: async () => {
                     try {
                         await updateDoc(doc(db, "users", uid), { isRestricted: false });
+                        document.getElementById('portal-modal').classList.remove('active');
                         triggerPortalModal({ title: "Clearance Granted", message: `@${username} has been successfully unrestricted.`, icon: "✅" });
-                    } catch (err) {
-                        triggerPortalModal({ title: "Write Error", message: err.message, icon: "❌" });
-                    }
+                    } catch (err) { alert(err.message); }
                 }
             });
         };
@@ -393,37 +484,25 @@
                     <div class="lockout-card">
                         <div class="lockout-icon">🚫</div>
                         <h1>Access Suspended</h1>
-                        <p style="color: #94a3b8; line-height: 1.6; font-size: 14px;">Your student access profile properties have been restricted by an administrator. You no longer have entry clearance for the Biscuit Portal dashboards.</p>
+                        <p style="color: #94a3b8; line-height: 1.6; font-size: 14px;">Your student access profile properties have been restricted by an administrator.</p>
                         <button onclick="window.triggerLogoutLive()" class="btn-lockout-logout">Return to Login</button>
                     </div>
                 </div>
             `;
-            document.body.style.display = "block";
         }
 
         async function runGracefulSignOut() {
             if (selfProfileListenerCancel) selfProfileListenerCancel();
             if (teacherMatrixListenerCancel) teacherMatrixListenerCancel();
-            
             if (currentActiveUserRef) {
-                try {
-                    await updateDoc(currentActiveUserRef, { isOnline: false });
-                } catch (e) { console.error(e); }
+                try { await updateDoc(currentActiveUserRef, { isOnline: false }); } catch (e) {}
             }
-            
-            signOut(auth).then(() => {
-                window.location.href = "/";
-            });
+            signOut(auth).then(() => { window.location.href = "/"; });
         }
 
         window.triggerLogoutLive = runGracefulSignOut;
         document.getElementById('logout-btn').addEventListener('click', runGracefulSignOut);
-
-        window.addEventListener('beforeunload', () => {
-            if (currentActiveUserRef) {
-                updateDoc(currentActiveUserRef, { isOnline: false });
-            }
-        });
+        window.addEventListener('beforeunload', () => { if (currentActiveUserRef) { updateDoc(currentActiveUserRef, { isOnline: false }); } });
     </script>
 </body>
 </html>

@@ -235,9 +235,11 @@
                     if (!snapshot.exists()) {
                         document.getElementById('loading-status').innerText = "Registering default dashboard credentials...";
                         try {
-                            // MATCHES ALL CURRENT DEFAULT REGISTRATION NAMING CONVENTIONS
+                            // ALIGNS WITH YOUR EXACT REGISTRATION KEY STRUCTURE: username_lower
+                            const defaultUser = user.displayName || user.email.split('@')[0];
                             await setDoc(currentActiveUserRef, {
-                                username: user.displayName || user.email.split('@')[0],
+                                username: defaultUser,
+                                username_lower: defaultUser.toLowerCase(),
                                 email: user.email,
                                 role: "student", 
                                 warnings: 0,
@@ -414,7 +416,7 @@
                     }
 
                     try {
-                        // 1. Verify educator authorization coupon code token
+                        // 1. Verify code validity
                         const codeVerificationRef = doc(db, "teacher_codes", enteredCode);
                         const codeSnapshot = await getDoc(codeVerificationRef);
 
@@ -423,19 +425,15 @@
                             return;
                         }
 
-                        // 2. CASE-INSENSITIVE DUPLICATE SCAN (Pulling collection to prevent case-shifting bypass)
-                        const allUsersSnapshot = await getDocs(collection(db, "users"));
+                        // 2. CASE-INSENSITIVE CHECK SEARCH USING YOUR KEY: username_lower
+                        const targetLowercaseName = chosenUsername.toLowerCase();
+                        const checkQuery = query(collection(db, "users"), where("username_lower", "==", targetLowercaseName));
+                        const duplicateCheckSnap = await getDocs(checkQuery);
+                        
                         let isNameTaken = false;
-                        const lowerInput = chosenUsername.toLowerCase();
-
-                        allUsersSnapshot.forEach((userDoc) => {
-                            const data = userDoc.data();
-                            // If any stored username matches our lowercase input, track it as taken
-                            if (data.username && data.username.toLowerCase() === lowerInput) {
-                                // Ignore check if it happens to be the current user's old name
-                                if (userDoc.id !== auth.currentUser.uid) {
-                                    isNameTaken = true;
-                                }
+                        duplicateCheckSnap.forEach((userDoc) => {
+                            if (userDoc.id !== auth.currentUser.uid) {
+                                isNameTaken = true;
                             }
                         });
 
@@ -444,10 +442,10 @@
                             return;
                         }
 
-                        // 3. SECURE PROPERTY SYNCHRONIZATION
-                        // Drops any unmapped fields entirely, keeping only the exact standard fields.
+                        // 3. CLEAN WRITES RESPECTING EXACT KEY STRUCTURE
                         await updateDoc(currentActiveUserRef, {
                             username: chosenUsername,
+                            username_lower: targetLowercaseName, // Keeps your native username_lower clean and perfectly synchronized
                             role: "teacher"
                         });
                         

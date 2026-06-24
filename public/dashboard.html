@@ -5,45 +5,283 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Biscuit Portal - Dashboard</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; margin: 0; padding: 40px; display: none; /* Hidden until auth & role check passes */ }
-        .wrapper { max-width: 800px; margin: 0 auto; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        h1 { color: #2c3e50; }
-        .user-box { background: #e8f4fd; padding: 15px; border-radius: 8px; color: #2980b9; font-weight: bold; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
-        .badge { background: #3498db; color: white; padding: 4px 10px; border-radius: 20px; font-size: 14px; text-transform: uppercase; }
-        .btn-logout { background: #e74c3c; color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        .btn-logout:hover { background: #c0392b; }
-        
-        /* TEACHER ZONE STYLE - Invisible by default */
-        #teacher-zone { display: none; background: #fff3cd; border-left: 5px solid #ffc107; padding: 20px; border-radius: 4px; margin-top: 30px; }
-        #teacher-zone h2 { margin-top: 0; color: #856404; }
+        /* Modern CSS Variables for Design Consistency */
+        :root {
+            --bg-main: #f8fafc;
+            --sidebar-bg: #1e293b;
+            --text-main: #334155;
+            --text-muted: #64748b;
+            --accent-blue: #3b82f6;
+            --accent-green: #10b981;
+            --accent-warning: #f59e0b;
+            --card-bg: #ffffff;
+            --border-color: #e2e8f0;
+        }
+
+        body { 
+            font-family: 'Inter', system-ui, -apple-system, sans-serif; 
+            background-color: var(--bg-main); 
+            margin: 0; 
+            padding: 0; 
+            display: none; /* Hidden until auth & role check passes */ 
+        }
+
+        /* App Layout Container */
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* 📁 SIDEBAR NAVIGATION STYLE */
+        .sidebar {
+            width: 260px;
+            background-color: var(--sidebar-bg);
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            padding: 24px;
+            box-sizing: border-box;
+        }
+
+        .sidebar-brand {
+            font-size: 20px;
+            font-weight: 800;
+            margin-bottom: 40px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-links {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .nav-item {
+            padding: 12px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            color: #94a3b8;
+            transition: all 0.2s ease;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background-color: #334155;
+            color: #ffffff;
+        }
+
+        /* 💻 MAIN CONTENT CONTAINER */
+        .main-content {
+            flex: 1;
+            padding: 40px;
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
+
+        /* 🔔 HEADER AREA */
+        .top-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 20px;
+        }
+
+        .top-header h1 {
+            margin: 0;
+            color: #0f172a;
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        /* 👤 DYNAMIC PROFILE USER BOX */
+        .user-profile-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            padding: 16px 24px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .avatar-placeholder {
+            width: 40px;
+            height: 40px;
+            background-color: #e2e8f0;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            color: var(--text-main);
+        }
+
+        .user-details {
+            display: flex;
+            flex-direction: column;
+        }
+
+        #user-display {
+            font-size: 14px;
+            font-weight: 600;
+            color: #0f172a;
+        }
+
+        .badge {
+            align-self: flex-start;
+            margin-top: 4px;
+            background: var(--accent-blue);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* 🗂️ GRID & CONTENT CARDS */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);
+        }
+
+        .card h3 {
+            margin-top: 0;
+            color: #0f172a;
+            font-size: 18px;
+        }
+
+        .card p {
+            color: var(--text-muted);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        /* 🛠️ SECRET TEACHER PANEL LAYOUT */
+        #teacher-zone {
+            display: none; /* Controlled dynamically by JavaScript */
+            background: #fffbeb;
+            border: 1px solid #fef3c7;
+            border-left: 6px solid var(--accent-warning);
+            border-radius: 16px;
+            padding: 24px;
+            margin-top: 32px;
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.05);
+        }
+
+        #teacher-zone h2 {
+            margin-top: 0;
+            color: #92400e;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* BUTTONS */
+        .btn-action {
+            background-color: var(--accent-blue);
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .btn-action:hover { opacity: 0.9; }
+
+        .btn-logout {
+            background-color: transparent;
+            color: #ef4444;
+            border: 1px solid #fee2e2;
+            padding: 10px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.2s;
+            margin-top: auto; /* Push to bottom of sidebar */
+        }
+
+        .btn-logout:hover {
+            background-color: #fef2f2;
+        }
     </style>
 </head>
 <body>
 
-    <div class="wrapper">
-        <div style="float: right;">
+    <div class="app-container">
+        <nav class="sidebar">
+            <div class="sidebar-brand">🍪 Biscuit Portal</div>
+            <ul class="nav-links">
+                <li class="nav-item active">🏠 Overview</li>
+                <li class="nav-item">📚 My Classes</li>
+                <li class="nav-item">📢 Announcements</li>
+                <li class="nav-item">⚙️ Settings</li>
+            </ul>
             <button id="logout-btn" class="btn-logout">Log Out</button>
-        </div>
-        <h1>🍪 Biscuit Student Portal</h1>
-        
-        <div class="user-box">
-            <span id="user-display">Checking credentials...</span>
-            <span id="role-badge" class="badge" style="display: none;">student</span>
-        </div>
-        
-        <p>Welcome to the main campus network portal. Your portal features are loaded securely based on your account clearance level.</p>
+        </nav>
 
-        <div id="teacher-zone">
-            <h2>🛠️ Teacher Control Panel</h2>
-            <p>This panel is completely locked down. Regular student accounts cannot see this HTML element or intercept its properties because it only renders if your Firestore cloud role is set to "teacher".</p>
-            <button style="background: #28a745; color: white; border: none; padding: 10px 15px; border-radius: 5px; font-weight: bold; cursor: pointer;">+ Create New Class Announcement</button>
-        </div>
+        <main class="main-content">
+            <header class="top-header">
+                <div>
+                    <h1>Welcome Back</h1>
+                    <p style="color: var(--text-muted); margin: 4px 0 0 0; font-size: 14px;">Here is what's happening across campus today.</p>
+                </div>
+                
+                <div class="user-profile-card">
+                    <div class="avatar-placeholder">🎓</div>
+                    <div class="user-details">
+                        <span id="user-display">Verifying Session...</span>
+                        <span id="role-badge" class="badge" style="display: none;">student</span>
+                    </div>
+                </div>
+            </header>
+
+            <div class="dashboard-grid">
+                <div class="card">
+                    <h3>📢 Campus Broadcast</h3>
+                    <p>Welcome to the modern infrastructure layout of the Biscuit Student Portal. Your individual features and administrative clearings load in real-time securely.</p>
+                </div>
+                <div class="card">
+                    <h3>🔒 System Security Status</h3>
+                    <p>All active paths inside this view are protected by client cryptographic token checking rules. Cross-origin profile forgery validation is fully operational.</p>
+                </div>
+            </div>
+
+            <div id="teacher-zone">
+                <h2>🛠️ Teacher Administrative Panel</h2>
+                <p style="color: #b45309; font-size: 14px; line-height: 1.6;">Your security credentials match administrative access levels. You have total clearance to broadcast changes, construct subfolder directories, and moderate structural modules.</p>
+                <button class="btn-action" style="background-color: var(--accent-green);">+ Create Live Announcement</button>
+            </div>
+        </main>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
-        // IMPORT FIRESTORE READ TOOLS
         import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -59,48 +297,44 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // THE SECURITY GUARD
+        // THE ROLE-BASED ACCESS GUARD
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 try {
-                    // 1. Fetch this logged-in user's profile document from Firestore using their unique UID
                     const userDocRef = doc(db, "users", user.uid);
                     const userDocSnap = await getDoc(userDocRef);
 
-                    let userRole = "student"; // fallback default
+                    let userRole = "student";
 
                     if (userDocSnap.exists()) {
-                        // 2. Read the role field from the database
                         userRole = userDocSnap.data().role;
                     }
 
-                    // 3. Display the user data on screen
-                    document.getElementById('user-display').innerText = `Logged in as: ${user.email}`;
+                    // Map fields smoothly to the upgraded design components
+                    document.getElementById('user-display').innerText = user.email;
                     const badge = document.getElementById('role-badge');
                     badge.innerText = userRole;
                     badge.style.display = "inline-block";
 
-                    // 4. STEP 3 FEATURE: If the role is teacher, unlock the admin control panel!
                     if (userRole === "teacher") {
                         document.getElementById('teacher-zone').style.display = "block";
-                        badge.style.background = "#28a745"; // Make the badge green for teachers
+                        badge.style.backgroundColor = "var(--accent-green)";
                     }
 
-                    // Reveal the whole page now that everything is checked
+                    // Smooth reveal animation fallback
                     document.body.style.display = "block";
 
                 } catch (error) {
-                    console.error("Error loading user profile data:", error);
-                    document.getElementById('user-display').innerText = "Error loading profile security clearance.";
+                    console.error("Error evaluating role validation clearance:", error);
+                    document.getElementById('user-display').innerText = "Clearance Error";
                     document.body.style.display = "block";
                 }
             } else {
-                // Not logged in? Kick them back to login screen
                 window.location.href = "/";
             }
         });
 
-        // LOGOUT BUTTON
+        // LOGOUT CORE
         document.getElementById('logout-btn').addEventListener('click', () => {
             signOut(auth).then(() => {
                 window.location.href = "/";

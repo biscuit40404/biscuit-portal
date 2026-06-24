@@ -34,6 +34,8 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
+        // IMPORT FIRESTORE TOOLS
+        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 
         // Your exact Firebase configuration
         const firebaseConfig = {
@@ -45,9 +47,10 @@
             appId: "1:426645012012:web:cc8d2992c474c40eaa9b89"
         };
 
-        // Initialize Firebase
+        // Initialize Firebase services
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
+        const db = getFirestore(app); // Connect to your Firestore database
 
         // DOM Elements
         const formTitle = document.getElementById('form-title');
@@ -87,8 +90,6 @@
                     .then((userCredential) => {
                         messageDisplay.innerText = "Success! Loading dashboard...";
                         messageDisplay.style.color = "#27ae60";
-                        
-                        // REDIRECT TO THE SECURE DASHBOARD SHELL
                         window.location.href = "/dashboard";
                     })
                     .catch((error) => {
@@ -99,7 +100,16 @@
                 // Register new student
                 createUserWithEmailAndPassword(auth, email, password)
                     .then((userCredential) => {
-                        messageDisplay.innerText = "Account created successfully! You can now log in.";
+                        const user = userCredential.user;
+                        
+                        // DB WRITE: Create a document for this specific user inside a "users" collection
+                        return setDoc(doc(db, "users", user.uid), {
+                            email: email,
+                            role: "student" // Everyone starts out automatically as a student
+                        });
+                    })
+                    .then(() => {
+                        messageDisplay.innerText = "Account created successfully with student profile! You can now log in.";
                         messageDisplay.style.color = "#27ae60";
                     })
                     .catch((error) => {

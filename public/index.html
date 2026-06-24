@@ -49,12 +49,16 @@
         <p id="message"></p>
     </div>
 
-    <div class="version-stamp">v1.1.2</div>
+    <div class="version-stamp" id="version-display-node">Loading...</div>
 
     <script type="module">
+        import { APP_VERSION } from "./version.js";
+        
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
         import { getFirestore, doc, setDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+
+        document.getElementById('version-display-node').innerText = APP_VERSION;
 
         const firebaseConfig = {
             apiKey: "AIzaSyDHBQ20Oan5NYyVbyf-0PMrIBGSNJKLYNY",
@@ -79,9 +83,8 @@
         const messageDisplay = document.getElementById('message');
 
         let isLoginMode = true;
-        let isRegisteringNow = false; // Prevents race-condition redirects during creation
+        let isRegisteringNow = false;
 
-        // 🔄 THE PERSISTENCE GUARD: Checks if a user is already logged in on boot
         onAuthStateChanged(auth, (user) => {
             if (user && !isRegisteringNow) {
                 window.location.href = "/dashboard";
@@ -143,7 +146,6 @@
                 }
 
                 try {
-                    // 🛡️ CASE-INSENSITIVE DUPLICATE SCAN
                     const lowerCheck = username.toLowerCase();
                     const q = query(collection(db, "users"), where("username_lower", "==", lowerCheck));
                     const querySnapshot = await getDocs(q);
@@ -154,13 +156,12 @@
                         return;
                     }
 
-                    isRegisteringNow = true; // Engage lock flag
+                    isRegisteringNow = true;
                     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                     const user = userCredential.user;
                     
                     await updateProfile(user, { displayName: username });
                     
-                    // Save both the clean display username AND the normalized verification index
                     await setDoc(doc(db, "users", user.uid), {
                         username: username,
                         username_lower: lowerCheck, 
@@ -171,7 +172,7 @@
                     window.location.href = "/dashboard";
 
                 } catch (error) {
-                    isRegisteringNow = false; // Release lock flag on error
+                    isRegisteringNow = false;
                     messageDisplay.innerText = "Error: " + error.message;
                     messageDisplay.style.color = "#c0392b";
                 }

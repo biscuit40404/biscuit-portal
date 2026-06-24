@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Biscuit Portal - Login</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .card { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; max-width: 400px; width: 100%; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; position: relative; }
+        .card { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; max-width: 400px; width: 100%; z-index: 2; }
         h1 { color: #2c3e50; margin-bottom: 20px; }
         input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
         .btn { width: 100%; background: #3498db; color: white; padding: 12px; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; transition: background 0.2s; margin-top: 10px; }
@@ -14,8 +14,21 @@
         .toggle-text { margin-top: 20px; color: #7f8c8d; font-size: 14px; cursor: pointer; }
         .toggle-text span { color: #3498db; font-weight: bold; }
         #message { margin-top: 15px; font-weight: bold; font-size: 14px; }
-        /* Username box hidden by default on login */
         #username-group { display: none; }
+
+        /* VERSION CONTROLLER FOOTER STYLING */
+        .version-stamp {
+            position: fixed;
+            bottom: 16px;
+            right: 16px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #94a3b8;
+            font-family: monospace;
+            letter-spacing: 0.5px;
+            user-select: none;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body>
@@ -36,6 +49,8 @@
         <p class="toggle-text" id="toggle-form">Don't have an account? <span>Register here</span></p>
         <p id="message"></p>
     </div>
+
+    <div class="version-stamp">v1.1.0</div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
@@ -87,8 +102,6 @@
             const password = passwordInput.value;
             const username = usernameInput.value.trim();
 
-            // STRICT INPUT VALIDATION FILTER
-            // Checks for string@domain.extension (e.g., stops things like 1234@asdasd with no .com/.net/.edu)
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             
             if (!emailRegex.test(email)) {
@@ -128,9 +141,7 @@
                     .then((userCredential) => {
                         const user = userCredential.user;
                         
-                        // 1. Write the username into Firebase Auth's profile system
                         return updateProfile(user, { displayName: username }).then(() => {
-                            // 2. Write the username and role into the Firestore Database
                             return setDoc(doc(db, "users", user.uid), {
                                 username: username,
                                 email: email,
@@ -139,11 +150,11 @@
                         });
                     })
                     .then(() => {
-                        messageDisplay.innerText = "Account verified & registered! You can now log in.";
+                        messageDisplay.innerText = "Account verified! Launching dashboard layout...";
                         messageDisplay.style.color = "#27ae60";
-                        // Flip view back to login automatically
-                        toggleForm.click();
-                        emailInput.value = email;
+                        
+                        // NEW AUTOMATIC REDIRECT PIPELINE
+                        window.location.href = "/dashboard";
                     })
                     .catch((error) => {
                         messageDisplay.innerText = "Error: " + error.message;

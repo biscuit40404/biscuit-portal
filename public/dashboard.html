@@ -42,11 +42,9 @@
         .card h3 { margin-top: 0; color: #0f172a; }
         .card p { color: var(--text-muted); font-size: 14px; line-height: 1.6; }
 
-        /* 🛠️ ADMIN STUDENT CONTROL PANEL */
         #teacher-zone { display: none; background: #ffffff; border: 1px solid var(--border-color); border-radius: 16px; padding: 24px; margin-top: 32px; box-shadow: 0 4px 12px rgba(0,0,0,0.02); }
         #teacher-zone h2 { margin-top: 0; color: #0f172a; font-size: 22px; margin-bottom: 20px; }
         
-        /* Student Rows Layout */
         .student-list { display: flex; flex-direction: column; gap: 12px; margin-top: 15px; }
         .student-row { display: flex; justify-content: space-between; align-items: center; padding: 16px; background: #f8fafc; border: 1px solid var(--border-color); border-radius: 10px; }
         .student-name { font-weight: 600; color: #1e293b; display: flex; align-items: center; gap: 8px; }
@@ -57,7 +55,19 @@
         .btn-mute { background: #fee2e2; color: var(--accent-red); }
         .btn-warn { background: #fef3c7; color: var(--accent-warning); }
 
-        .btn-logout { background-color: transparent; color: #ef4444; border: 1px solid #fee2e2; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; margin-top: auto; }
+        /* FIXED SIDEBAR VERSION LABELLING STYLES */
+        .version-sidebar-stamp {
+            font-size: 11px;
+            font-weight: 600;
+            color: #475569;
+            font-family: monospace;
+            margin-top: auto; /* Pushes the element to the bottom of the column layout */
+            margin-bottom: 12px;
+            letter-spacing: 0.5px;
+            user-select: none;
+        }
+
+        .btn-logout { background-color: transparent; color: #ef4444; border: 1px solid #fee2e2; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; }
         .btn-logout:hover { background-color: #fef2f2; }
     </style>
 </head>
@@ -71,6 +81,9 @@
                 <li class="nav-item">📚 My Classes</li>
                 <li class="nav-item">📢 Announcements</li>
             </ul>
+            
+            <div class="version-sidebar-stamp">BUILD DEV_v1.1.1</div>
+            
             <button id="logout-btn" class="btn-logout">Log Out</button>
         </nav>
 
@@ -115,7 +128,6 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
-        // Import Firestore list fetching tools (collection, getDocs, query, where)
         import { getFirestore, doc, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -138,7 +150,7 @@
                     const userDocSnap = await getDoc(userDocRef);
 
                     let userRole = "student";
-                    let usernameDisplay = user.displayName || "Student User"; // Reads the Auth display name property
+                    let usernameDisplay = user.displayName || "Student User";
 
                     if (userDocSnap.exists()) {
                         userRole = userDocSnap.data().role;
@@ -147,18 +159,14 @@
                         }
                     }
 
-                    // Display username instead of email string
                     document.getElementById('user-display').innerText = `@${usernameDisplay}`;
                     const badge = document.getElementById('role-badge');
                     badge.innerText = userRole;
                     badge.style.display = "inline-block";
 
-                    // IF ACCOUNT IS A TEACHER -> REVEAL AND POPULATE ADMINISTRATIVE LIST
                     if (userRole === "teacher") {
                         document.getElementById('teacher-zone').style.display = "block";
                         badge.style.backgroundColor = "var(--accent-green)";
-                        
-                        // Execute database pull for all records marked as a student
                         loadStudentProfiles();
                     }
 
@@ -173,16 +181,13 @@
             }
         });
 
-        // FUNCTION TO PULL AND RENDER REGISTERED STUDENTS
         async function loadStudentProfiles() {
             const container = document.getElementById('students-container');
             
             try {
-                // Query the users collection where role == student
                 const q = query(collection(db, "users"), where("role", "==", "student"));
                 const querySnapshot = await getDocs(q);
                 
-                // Clear the loading text element
                 container.innerHTML = "";
 
                 if (querySnapshot.empty) {
@@ -195,7 +200,6 @@
                     const sName = data.username || "Unnamed Profile";
                     const sEmail = data.email || "No Email Bound";
 
-                    // Build a responsive management row module for each student
                     const row = document.createElement('div');
                     row.className = 'student-row';
                     row.innerHTML = `
@@ -217,7 +221,6 @@
             }
         }
 
-        // LOGOUT ACTION
         document.getElementById('logout-btn').addEventListener('click', () => {
             signOut(auth).then(() => {
                 window.location.href = "/";

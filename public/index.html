@@ -56,14 +56,8 @@
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
         import { getFirestore, doc, setDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 
-        // Safe loader: If version.js is missing, it won't crash the buttons anymore
-        let APP_VERSION = "Dev Mode";
-        try {
-            const versionModule = await import("./version.js");
-            APP_VERSION = versionModule.APP_VERSION;
-        } catch (err) {
-            console.log("Version file not generated yet by the robot.");
-        }
+        // MANUAL VERSIONING: Change this string whenever you want to update your version manually!
+        const APP_VERSION = "v1.0.0";
         document.getElementById('version-display-node').innerText = APP_VERSION;
 
         const firebaseConfig = {
@@ -132,7 +126,7 @@
                 return;
             }
 
-            messageDisplay.innerText = "Processing...";
+            messageDisplay.innerText = "Processing... ";
             messageDisplay.style.color = "#2c3e50";
 
             if (isLoginMode) {

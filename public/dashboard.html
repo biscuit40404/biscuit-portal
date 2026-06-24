@@ -53,7 +53,7 @@
         .student-email { font-size: 12px; color: var(--text-muted); font-weight: normal; }
         .student-stats { font-size: 11px; color: var(--text-muted); margin-top: 2px; font-family: monospace; display: flex; gap: 12px; align-items: center; }
         
-        /* Online Status Badges */
+        /* Status Display Components */
         .status-pill { display: inline-flex; align-items: center; gap: 6px; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; }
         .status-online { background: #d1fae5; color: #065f46; }
         .status-offline { background: #f1f5f9; color: #475569; }
@@ -61,18 +61,23 @@
         .status-online .status-dot { background: var(--accent-green); }
         .status-offline .status-dot { background: var(--text-muted); }
 
+        /* Row Action Terminal Targets */
         .control-buttons { display: flex; gap: 8px; }
         .btn-ctrl { padding: 8px 14px; border: none; border-radius: 6px; font-weight: 600; font-size: 12px; cursor: pointer; transition: background 0.2s; }
         .btn-warn { background: #fef3c7; color: var(--accent-warning); }
         .btn-warn:hover { background: #fde68a; }
         .btn-mute { background: #fee2e2; color: var(--accent-red); }
         .btn-mute:hover { background: #fecaca; }
+        
+        /* New Unrestrict Action Button Aesthetics */
+        .btn-unrestrict { background: #d1fae5; color: #065f46; }
+        .btn-unrestrict:hover { background: #a7f3d0; }
 
         .version-sidebar-stamp { font-size: 11px; font-weight: 600; color: #475569; font-family: monospace; margin-top: auto; margin-bottom: 12px; letter-spacing: 0.5px; user-select: none; }
         .btn-logout { background-color: transparent; color: #ef4444; border: 1px solid #fee2e2; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; }
         .btn-logout:hover { background-color: #fef2f2; }
 
-        /* Custom UI Modal System */
+        /* Custom Portal Dialog Structure */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); display: flex; justify-content: center; align-items: center; z-index: 10000; visibility: hidden; opacity: 0; transition: opacity 0.2s, visibility 0.2s; }
         .modal-overlay.active { visibility: visible; opacity: 1; }
         .modal-box { background: white; padding: 28px; border-radius: 16px; max-width: 400px; width: 90%; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); border: 1px solid var(--border-color); text-align: center; transform: scale(0.95); transition: transform 0.2s; }
@@ -86,7 +91,7 @@
         .btn-modal-confirm.danger { background: var(--accent-red); }
         .btn-modal-cancel { background: #e2e8f0; color: var(--text-main); }
 
-        /* Permanent Lockout Dashboard Mask */
+        /* Lockout Mask Display Framework */
         .lockout-screen { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #0f172a; color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 99999; text-align: center; }
         .lockout-card { background: #1e293b; padding: 40px; border-radius: 16px; border: 1px solid #334155; max-width: 450px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
         .lockout-icon { font-size: 64px; margin-bottom: 16px; }
@@ -95,12 +100,11 @@
 </head>
 <body>
 
-    <!-- CUSTOM PORTAL MODAL WINDOW -->
     <div id="portal-modal" class="modal-overlay">
         <div class="modal-box">
-            <div id="modal-icon" class="modal-icon">🔔</div>
-            <div id="modal-title" class="modal-title">Notification</div>
-            <div id="modal-message" class="modal-msg">System operation message goes here.</div>
+            <div id="modal-icon" class="modal-icon"></div>
+            <div id="modal-title" class="modal-title"></div>
+            <div id="modal-message" class="modal-msg"></div>
             <div class="modal-actions">
                 <button id="modal-cancel-btn" class="btn-modal btn-modal-cancel">Cancel</button>
                 <button id="modal-confirm-btn" class="btn-modal btn-modal-confirm">Confirm</button>
@@ -137,7 +141,6 @@
                 </div>
             </header>
 
-            <!-- LIVE Student Warning Banner -->
             <div id="warning-banner">⚠️ ATTENTION: Formal disciplinary warnings loaded.</div>
 
             <div class="dashboard-grid">
@@ -151,7 +154,6 @@
                 </div>
             </div>
 
-            <!-- LIVE Teacher Zone Matrix -->
             <div id="teacher-zone">
                 <h2>🛠️ Student Management Matrix</h2>
                 <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px;">Live student directory cluster synchronized. System actions deploy across nodes instantaneously.</p>
@@ -166,7 +168,8 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
-        import { getFirestore, doc, collection, query, where, onSnapshot, updateDoc, increment } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+        import { getFirestore, doc, collection, query, where, onSnapshot, updateDoc, increment } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
+        import { getFirestore as initFirestore } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 
         const APP_VERSION = "v1.0.0";
         document.getElementById('dashboard-version-node').innerText = `BUILD DEV_${APP_VERSION}`;
@@ -182,7 +185,7 @@
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
-        const db = getFirestore(app);
+        const db = initFirestore(app);
 
         let currentActiveUserRef = null;
         let selfProfileListenerCancel = null;
@@ -192,15 +195,14 @@
             if (user) {
                 currentActiveUserRef = doc(db, "users", user.uid);
                 
-                // 1. SET PRESENCE TO ONLINE IMMEDIATELY
+                // Set identity footprint trace indicator
                 await updateDoc(currentActiveUserRef, { isOnline: true });
 
-                // 2. ATTACH REAL-TIME STREAM ON THE LOGGED-IN ACCOUNT DOCUMENT
                 selfProfileListenerCancel = onSnapshot(currentActiveUserRef, (snapshot) => {
                     if (!snapshot.exists()) return;
                     const userData = snapshot.data();
 
-                    // INSTANT SECURITY SUSPENSION ENFORCEMENT
+                    // Real-time access interceptor logic
                     if (userData.isRestricted === true) {
                         showLockoutScreen();
                         if (selfProfileListenerCancel) selfProfileListenerCancel();
@@ -216,7 +218,6 @@
                     badge.innerText = userRole;
                     badge.style.display = "inline-block";
 
-                    // INSTANT STUDENT WARNING COUNTER INJECTION
                     if (userRole === "student") {
                         const banner = document.getElementById('warning-banner');
                         if (userData.warnings > 0) {
@@ -227,7 +228,6 @@
                         }
                     }
 
-                    // INITIALIZE TEACHER DASHBOARD STREAM IF TARGET PROFILE MATCHES ROLE
                     if (userRole === "teacher") {
                         document.getElementById('teacher-zone').style.display = "block";
                         badge.style.backgroundColor = "var(--accent-green)";
@@ -238,7 +238,7 @@
 
                     document.body.style.display = "block";
                 }, (error) => {
-                    console.error("Self structural document stream processing failure:", error);
+                    console.error("Self structural stream fail:", error);
                 });
 
             } else {
@@ -246,7 +246,7 @@
             }
         });
 
-        // 3. TEACHER MODE: REAL-TIME STREAM OF REGISTERED STUDENTS + ONLINE INDICATORS
+        // LIVE DIRECTORY LISTENER MAP
         function listenToStudentProfilesLive() {
             const container = document.getElementById('students-container');
             const q = query(collection(db, "users"), where("role", "==", "student"));
@@ -265,12 +265,18 @@
                     const sName = data.username || "Unnamed Profile";
                     const sEmail = data.email || "No Email Bound";
                     const sWarnings = data.warnings || 0;
-                    const sRestricted = data.isRestricted ? "RESTRICTED" : "ACTIVE";
                     
-                    // Live Presence Toggle
+                    const isRestricted = data.isRestricted === true;
+                    const sStatusText = isRestricted ? "RESTRICTED" : "ACTIVE";
+                    
                     const isOnline = data.isOnline === true;
                     const presenceClass = isOnline ? 'status-online' : 'status-offline';
                     const presenceText = isOnline ? 'Online' : 'Offline';
+
+                    // DYNAMIC ACTION BUTTON GENERATOR MASK
+                    const securityActionButton = isRestricted
+                        ? `<button class="btn-ctrl btn-unrestrict" onclick="unrestrictAccessLive('${sUid}', '${sName}')">🔓 Unrestrict</button>`
+                        : `<button class="btn-ctrl btn-mute" onclick="restrictAccessLive('${sUid}', '${sName}')">🚫 Restrict Access</button>`;
 
                     const row = document.createElement('div');
                     row.className = 'student-row';
@@ -279,23 +285,22 @@
                             <div>
                                 👤 @${sName} <span class="status-pill ${presenceClass}"><span class="status-dot"></span>${presenceText}</span>
                                 <div class="student-email">${sEmail}</div>
-                                <div class="student-stats">Warnings logged: <strong>${sWarnings}</strong> | Security Status: <strong>${sRestricted}</strong></div>
+                                <div class="student-stats">Warnings logged: <strong>${sWarnings}</strong> | Security Status: <strong style="color: ${isRestricted ? 'var(--accent-red)' : 'var(--accent-green)'}">${sStatusText}</strong></div>
                             </div>
                         </div>
                         <div class="control-buttons">
                             <button class="btn-ctrl btn-warn" onclick="issueWarningLive('${sUid}', '${sName}')">⚠️ Issue Warning</button>
-                            <button class="btn-ctrl btn-mute" onclick="restrictAccessLive('${sUid}', '${sName}')">🚫 Restrict Access</button>
+                            ${securityActionButton}
                         </div>
                     `;
                     container.appendChild(row);
                 });
             }, (error) => {
-                console.error("Teacher master snapshot synchronization failure:", error);
-                container.innerHTML = "<p style='color: var(--accent-red);'>Terminal connection drop on administrative roster sync.</p>";
+                console.error("Roster synchronization drop:", error);
             });
         }
 
-        // 4. CUSTOM PORTAL MODAL ENGINE ENGINE (Replaces alert & confirm completely)
+        // CONTROL DIALOG ELEMENT WRAPPER UTILITY
         function triggerPortalModal({ title, message, icon, confirmText, isDanger, onConfirm }) {
             const overlay = document.getElementById('portal-modal');
             document.getElementById('modal-title').innerText = title;
@@ -313,7 +318,6 @@
 
             overlay.classList.add('active');
 
-            // Reset execution click handlers safely
             confirmBtn.onclick = () => {
                 overlay.classList.remove('active');
                 if (onConfirm) onConfirm();
@@ -324,7 +328,7 @@
             };
         }
 
-        // EXPOSED TERMINAL OPERATIONS (Linked to row click actions)
+        // EXPOSED ADMINISTRATIVE EXECUTORS
         window.issueWarningLive = function(uid, username) {
             triggerPortalModal({
                 title: "Confirm Disciplinary Warning",
@@ -361,6 +365,25 @@
             });
         };
 
+        // NEW UNRESTRICT OPERATOR: Clears suspension flag instantly
+        window.unrestrictAccessLive = function(uid, username) {
+            triggerPortalModal({
+                title: "Lift Student Profile Restriction",
+                message: `Are you sure you want to restore workspace clearance coordinates for @${username}? They will be allowed access instantly.`,
+                icon: "🔓",
+                confirmText: "Lift Restriction",
+                isDanger: false,
+                onConfirm: async () => {
+                    try {
+                        await updateDoc(doc(db, "users", uid), { isRestricted: false });
+                        triggerPortalModal({ title: "Clearance Granted", message: `@${username} has been successfully unrestricted.`, icon: "✅" });
+                    } catch (err) {
+                        triggerPortalModal({ title: "Write Error", message: err.message, icon: "❌" });
+                    }
+                }
+            });
+        };
+
         function showLockoutScreen() {
             document.body.innerHTML = `
                 <div class="lockout-screen">
@@ -375,7 +398,6 @@
             document.body.style.display = "block";
         }
 
-        // CLEAN EXIT PRESENCE MUTATION HERS
         async function runGracefulSignOut() {
             if (selfProfileListenerCancel) selfProfileListenerCancel();
             if (teacherMatrixListenerCancel) teacherMatrixListenerCancel();
@@ -394,10 +416,8 @@
         window.triggerLogoutLive = runGracefulSignOut;
         document.getElementById('logout-btn').addEventListener('click', runGracefulSignOut);
 
-        // GO OFFLINE AUTOMATICALLY IF WINDOW CLOSES OR DISCONNECTS
         window.addEventListener('beforeunload', () => {
             if (currentActiveUserRef) {
-                // Quick asynchronous firestore backup execution
                 updateDoc(currentActiveUserRef, { isOnline: false });
             }
         });

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Biscuit Portal - Dashboard</title>
+    <title>Biscuit Portal - Realtime Dashboard</title>
     <style>
         :root {
             --bg-main: #f8fafc;
@@ -51,35 +51,62 @@
         .student-row { display: flex; justify-content: space-between; align-items: center; padding: 16px; background: #f8fafc; border: 1px solid var(--border-color); border-radius: 10px; }
         .student-name { font-weight: 600; color: #1e293b; display: flex; align-items: center; gap: 8px; }
         .student-email { font-size: 12px; color: var(--text-muted); font-weight: normal; }
-        .student-stats { font-size: 11px; color: var(--accent-warning); margin-top: 2px; font-family: monospace; }
+        .student-stats { font-size: 11px; color: var(--text-muted); margin-top: 2px; font-family: monospace; display: flex; gap: 12px; align-items: center; }
         
+        /* Online Status Badges */
+        .status-pill { display: inline-flex; align-items: center; gap: 6px; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; }
+        .status-online { background: #d1fae5; color: #065f46; }
+        .status-offline { background: #f1f5f9; color: #475569; }
+        .status-dot { width: 6px; height: 6px; border-radius: 50%; }
+        .status-online .status-dot { background: var(--accent-green); }
+        .status-offline .status-dot { background: var(--text-muted); }
+
         .control-buttons { display: flex; gap: 8px; }
-        .btn-ctrl { padding: 6px 12px; border: none; border-radius: 6px; font-weight: 600; font-size: 12px; cursor: pointer; }
-        .btn-mute { background: #fee2e2; color: var(--accent-red); }
+        .btn-ctrl { padding: 8px 14px; border: none; border-radius: 6px; font-weight: 600; font-size: 12px; cursor: pointer; transition: background 0.2s; }
         .btn-warn { background: #fef3c7; color: var(--accent-warning); }
+        .btn-warn:hover { background: #fde68a; }
+        .btn-mute { background: #fee2e2; color: var(--accent-red); }
+        .btn-mute:hover { background: #fecaca; }
 
-        .version-sidebar-stamp {
-            font-size: 11px;
-            font-weight: 600;
-            color: #475569;
-            font-family: monospace;
-            margin-top: auto;
-            margin-bottom: 12px;
-            letter-spacing: 0.5px;
-            user-select: none;
-        }
-
+        .version-sidebar-stamp { font-size: 11px; font-weight: 600; color: #475569; font-family: monospace; margin-top: auto; margin-bottom: 12px; letter-spacing: 0.5px; user-select: none; }
         .btn-logout { background-color: transparent; color: #ef4444; border: 1px solid #fee2e2; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; }
         .btn-logout:hover { background-color: #fef2f2; }
 
-        /* Lockout screen styles */
-        .lockout-screen { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #0f172a; color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; font-family: sans-serif; text-align: center; }
+        /* Custom UI Modal System */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); display: flex; justify-content: center; align-items: center; z-index: 10000; visibility: hidden; opacity: 0; transition: opacity 0.2s, visibility 0.2s; }
+        .modal-overlay.active { visibility: visible; opacity: 1; }
+        .modal-box { background: white; padding: 28px; border-radius: 16px; max-width: 400px; width: 90%; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); border: 1px solid var(--border-color); text-align: center; transform: scale(0.95); transition: transform 0.2s; }
+        .modal-overlay.active .modal-box { transform: scale(1); }
+        .modal-icon { font-size: 44px; margin-bottom: 12px; }
+        .modal-title { font-size: 20px; font-weight: 700; color: #0f172a; margin-bottom: 8px; }
+        .modal-msg { font-size: 14px; color: var(--text-muted); line-height: 1.5; margin-bottom: 24px; }
+        .modal-actions { display: flex; gap: 12px; justify-content: center; }
+        .btn-modal { padding: 10px 20px; border-radius: 8px; font-weight: 600; font-size: 14px; cursor: pointer; border: none; min-width: 100px; }
+        .btn-modal-confirm { background: var(--sidebar-bg); color: white; }
+        .btn-modal-confirm.danger { background: var(--accent-red); }
+        .btn-modal-cancel { background: #e2e8f0; color: var(--text-main); }
+
+        /* Permanent Lockout Dashboard Mask */
+        .lockout-screen { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #0f172a; color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 99999; text-align: center; }
         .lockout-card { background: #1e293b; padding: 40px; border-radius: 16px; border: 1px solid #334155; max-width: 450px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
         .lockout-icon { font-size: 64px; margin-bottom: 16px; }
         .btn-lockout-logout { background: var(--accent-red); color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 20px; font-size: 16px; }
     </style>
 </head>
 <body>
+
+    <!-- CUSTOM PORTAL MODAL WINDOW -->
+    <div id="portal-modal" class="modal-overlay">
+        <div class="modal-box">
+            <div id="modal-icon" class="modal-icon">🔔</div>
+            <div id="modal-title" class="modal-title">Notification</div>
+            <div id="modal-message" class="modal-msg">System operation message goes here.</div>
+            <div class="modal-actions">
+                <button id="modal-cancel-btn" class="btn-modal btn-modal-cancel">Cancel</button>
+                <button id="modal-confirm-btn" class="btn-modal btn-modal-confirm">Confirm</button>
+            </div>
+        </div>
+    </div>
 
     <div class="app-container">
         <nav class="sidebar">
@@ -91,7 +118,6 @@
             </ul>
             
             <div class="version-sidebar-stamp" id="dashboard-version-node">Loading...</div>
-            
             <button id="logout-btn" class="btn-logout">Log Out</button>
         </nav>
 
@@ -111,7 +137,8 @@
                 </div>
             </header>
 
-            <div id="warning-banner">⚠️ ATTENTION: You have received a formal disciplinary warning from an administrator. Please correct your system behavior.</div>
+            <!-- LIVE Student Warning Banner -->
+            <div id="warning-banner">⚠️ ATTENTION: Formal disciplinary warnings loaded.</div>
 
             <div class="dashboard-grid">
                 <div class="card">
@@ -124,12 +151,13 @@
                 </div>
             </div>
 
+            <!-- LIVE Teacher Zone Matrix -->
             <div id="teacher-zone">
                 <h2>🛠️ Student Management Matrix</h2>
-                <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px;">The database has automatically pulled all registered student accounts below. Use these terminal modules to execute controls:</p>
+                <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px;">Live student directory cluster synchronized. System actions deploy across nodes instantaneously.</p>
                 
                 <div class="student-list" id="students-container">
-                    <p id="loading-students" style="color: var(--text-muted); font-style: italic;">Querying student catalog from cloud cluster...</p>
+                    <p id="loading-students" style="color: var(--text-muted); font-style: italic;">Opening real-time database listener stream...</p>
                 </div>
             </div>
         </main>
@@ -138,7 +166,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, collection, query, where, getDocs, updateDoc, increment } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+        import { getFirestore, doc, collection, query, where, onSnapshot, updateDoc, increment } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 
         const APP_VERSION = "v1.0.0";
         document.getElementById('dashboard-version-node').innerText = `BUILD DEV_${APP_VERSION}`;
@@ -156,66 +184,74 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
+        let currentActiveUserRef = null;
+        let selfProfileListenerCancel = null;
+        let teacherMatrixListenerCancel = null;
+
         onAuthStateChanged(auth, async (user) => {
             if (user) {
-                try {
-                    const userDocRef = doc(db, "users", user.uid);
-                    const userDocSnap = await getDoc(userDocRef);
+                currentActiveUserRef = doc(db, "users", user.uid);
+                
+                // 1. SET PRESENCE TO ONLINE IMMEDIATELY
+                await updateDoc(currentActiveUserRef, { isOnline: true });
 
-                    let userRole = "student";
-                    let usernameDisplay = user.displayName || "Student User";
+                // 2. ATTACH REAL-TIME STREAM ON THE LOGGED-IN ACCOUNT DOCUMENT
+                selfProfileListenerCancel = onSnapshot(currentActiveUserRef, (snapshot) => {
+                    if (!snapshot.exists()) return;
+                    const userData = snapshot.data();
 
-                    if (userDocSnap.exists()) {
-                        const userData = userDocSnap.data();
-                        userRole = userData.role;
-                        if(userData.username) {
-                            usernameDisplay = userData.username;
-                        }
-
-                        // SECURITY LOCKOUT CHECK: Kick out restricted profiles immediately
-                        if (userData.isRestricted === true) {
-                            showLockoutScreen();
-                            return;
-                        }
-
-                        // WARNING CHECK: Show warning banner if student has warnings
-                        if (userRole === "student" && userData.warnings > 0) {
-                            const banner = document.getElementById('warning-banner');
-                            banner.innerText = `⚠️ ATTENTION @${usernameDisplay}: You have received (${userData.warnings}) formal system warning(s).`;
-                            banner.style.display = "block";
-                        }
+                    // INSTANT SECURITY SUSPENSION ENFORCEMENT
+                    if (userData.isRestricted === true) {
+                        showLockoutScreen();
+                        if (selfProfileListenerCancel) selfProfileListenerCancel();
+                        if (teacherMatrixListenerCancel) teacherMatrixListenerCancel();
+                        return;
                     }
+
+                    const userRole = userData.role || "student";
+                    const usernameDisplay = userData.username || user.displayName || "User";
 
                     document.getElementById('user-display').innerText = `@${usernameDisplay}`;
                     const badge = document.getElementById('role-badge');
                     badge.innerText = userRole;
                     badge.style.display = "inline-block";
 
+                    // INSTANT STUDENT WARNING COUNTER INJECTION
+                    if (userRole === "student") {
+                        const banner = document.getElementById('warning-banner');
+                        if (userData.warnings > 0) {
+                            banner.innerText = `⚠️ ATTENTION @${usernameDisplay}: You have received (${userData.warnings}) formal system warning(s). Please align your profile behavior.`;
+                            banner.style.display = "block";
+                        } else {
+                            banner.style.display = "none";
+                        }
+                    }
+
+                    // INITIALIZE TEACHER DASHBOARD STREAM IF TARGET PROFILE MATCHES ROLE
                     if (userRole === "teacher") {
                         document.getElementById('teacher-zone').style.display = "block";
                         badge.style.backgroundColor = "var(--accent-green)";
-                        loadStudentProfiles();
+                        if (!teacherMatrixListenerCancel) {
+                            listenToStudentProfilesLive();
+                        }
                     }
 
                     document.body.style.display = "block";
+                }, (error) => {
+                    console.error("Self structural document stream processing failure:", error);
+                });
 
-                } catch (error) {
-                    console.error("Session validation processing failure:", error);
-                    document.body.style.display = "block";
-                }
             } else {
                 window.location.href = "/";
             }
         });
 
-        // Load all students into the Teacher Panel
-        async function loadStudentProfiles() {
+        // 3. TEACHER MODE: REAL-TIME STREAM OF REGISTERED STUDENTS + ONLINE INDICATORS
+        function listenToStudentProfilesLive() {
             const container = document.getElementById('students-container');
-            
-            try {
-                const q = query(collection(db, "users"), where("role", "==", "student"));
-                const querySnapshot = await getDocs(q);
-                
+            const q = query(collection(db, "users"), where("role", "==", "student"));
+
+            teacherMatrixListenerCancel = onSnapshot(q, (querySnapshot) => {
                 container.innerHTML = "";
 
                 if (querySnapshot.empty) {
@@ -230,59 +266,100 @@
                     const sEmail = data.email || "No Email Bound";
                     const sWarnings = data.warnings || 0;
                     const sRestricted = data.isRestricted ? "RESTRICTED" : "ACTIVE";
+                    
+                    // Live Presence Toggle
+                    const isOnline = data.isOnline === true;
+                    const presenceClass = isOnline ? 'status-online' : 'status-offline';
+                    const presenceText = isOnline ? 'Online' : 'Offline';
 
                     const row = document.createElement('div');
                     row.className = 'student-row';
                     row.innerHTML = `
                         <div class="student-name">
                             <div>
-                                👤 @${sName} <span class="student-email">(${sEmail})</span>
-                                <div class="student-stats">Warnings: ${sWarnings} | Status: ${sRestricted}</div>
+                                👤 @${sName} <span class="status-pill ${presenceClass}"><span class="status-dot"></span>${presenceText}</span>
+                                <div class="student-email">${sEmail}</div>
+                                <div class="student-stats">Warnings logged: <strong>${sWarnings}</strong> | Security Status: <strong>${sRestricted}</strong></div>
                             </div>
                         </div>
                         <div class="control-buttons">
-                            <button class="btn-ctrl btn-warn" onclick="issueWarning('${sUid}', '${sName}')">⚠️ Issue Warning</button>
-                            <button class="btn-ctrl btn-mute" onclick="restrictAccess('${sUid}', '${sName}')">🚫 Restrict Access</button>
+                            <button class="btn-ctrl btn-warn" onclick="issueWarningLive('${sUid}', '${sName}')">⚠️ Issue Warning</button>
+                            <button class="btn-ctrl btn-mute" onclick="restrictAccessLive('${sUid}', '${sName}')">🚫 Restrict Access</button>
                         </div>
                     `;
                     container.appendChild(row);
                 });
-
-            } catch (error) {
-                console.error("Database query failed:", error);
-                container.innerHTML = "<p style='color: var(--accent-red);'>Terminal authentication error while parsing directory map.</p>";
-            }
+            }, (error) => {
+                console.error("Teacher master snapshot synchronization failure:", error);
+                container.innerHTML = "<p style='color: var(--accent-red);'>Terminal connection drop on administrative roster sync.</p>";
+            });
         }
 
-        // EXPOSE ACTIONS TO THE BUTTONS (Baking them onto the window object)
-        window.issueWarning = async function(uid, username) {
-            try {
-                const studentDocRef = doc(db, "users", uid);
-                await updateDoc(studentDocRef, {
-                    warnings: increment(1)
-                });
-                alert(`Success: Incremented warning count for @${username}!`);
-                loadStudentProfiles(); // Refresh the list view instantly
-            } catch (err) {
-                alert("Failed to issue warning: " + err.message);
+        // 4. CUSTOM PORTAL MODAL ENGINE ENGINE (Replaces alert & confirm completely)
+        function triggerPortalModal({ title, message, icon, confirmText, isDanger, onConfirm }) {
+            const overlay = document.getElementById('portal-modal');
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-message').innerText = message;
+            document.getElementById('modal-icon').innerText = icon || "ℹ️";
+            
+            const confirmBtn = document.getElementById('modal-confirm-btn');
+            confirmBtn.innerText = confirmText || "OK";
+            
+            if (isDanger) {
+                confirmBtn.className = "btn-modal btn-modal-confirm danger";
+            } else {
+                confirmBtn.className = "btn-modal btn-modal-confirm";
             }
+
+            overlay.classList.add('active');
+
+            // Reset execution click handlers safely
+            confirmBtn.onclick = () => {
+                overlay.classList.remove('active');
+                if (onConfirm) onConfirm();
+            };
+            
+            document.getElementById('modal-cancel-btn').onclick = () => {
+                overlay.classList.remove('active');
+            };
         }
 
-        window.restrictAccess = async function(uid, username) {
-            const confirmCheck = confirm(`Are you absolutely sure you want to suspend @${username} entirely?`);
-            if (!confirmCheck) return;
+        // EXPOSED TERMINAL OPERATIONS (Linked to row click actions)
+        window.issueWarningLive = function(uid, username) {
+            triggerPortalModal({
+                title: "Confirm Disciplinary Warning",
+                message: `Are you sure you want to write an official system warning to @${username}'s active database token?`,
+                icon: "⚠️",
+                confirmText: "Issue Warning",
+                isDanger: false,
+                onConfirm: async () => {
+                    try {
+                        await updateDoc(doc(db, "users", uid), { warnings: increment(1) });
+                        triggerPortalModal({ title: "Operation Complete", message: `Warning written to @${username} successfully!`, icon: "✅" });
+                    } catch (err) {
+                        triggerPortalModal({ title: "Write Error", message: err.message, icon: "❌" });
+                    }
+                }
+            });
+        };
 
-            try {
-                const studentDocRef = doc(db, "users", uid);
-                await updateDoc(studentDocRef, {
-                    isRestricted: true
-                });
-                alert(`Success: @${username} has been locked out of the portal.`);
-                loadStudentProfiles(); // Refresh list view instantly
-            } catch (err) {
-                alert("Failed to restrict access: " + err.message);
-            }
-        }
+        window.restrictAccessLive = function(uid, username) {
+            triggerPortalModal({
+                title: "CRITICAL: Restrict Student Profile",
+                message: `You are about to lock @${username} out of the portal ecosystem. This takes effect across all open tabs instantaneously.`,
+                icon: "🚫",
+                confirmText: "Execute Lockout",
+                isDanger: true,
+                onConfirm: async () => {
+                    try {
+                        await updateDoc(doc(db, "users", uid), { isRestricted: true });
+                        triggerPortalModal({ title: "Access Revoked", message: `@${username} system account vector has been suspended.`, icon: "🔒" });
+                    } catch (err) {
+                        triggerPortalModal({ title: "Write Error", message: err.message, icon: "❌" });
+                    }
+                }
+            });
+        };
 
         function showLockoutScreen() {
             document.body.innerHTML = `
@@ -290,24 +367,39 @@
                     <div class="lockout-card">
                         <div class="lockout-icon">🚫</div>
                         <h1>Access Suspended</h1>
-                        <p style="color: #94a3b8; line-height: 1.6;">Your student access profile properties have been restricted by an administrator. You no longer have entry clearance for the Biscuit Portal dashboards.</p>
-                        <button onclick="window.triggerLogout()" class="btn-lockout-logout">Return to Login</button>
+                        <p style="color: #94a3b8; line-height: 1.6; font-size: 14px;">Your student access profile properties have been restricted by an administrator. You no longer have entry clearance for the Biscuit Portal dashboards.</p>
+                        <button onclick="window.triggerLogoutLive()" class="btn-lockout-logout">Return to Login</button>
                     </div>
                 </div>
             `;
             document.body.style.display = "block";
         }
 
-        window.triggerLogout = function() {
+        // CLEAN EXIT PRESENCE MUTATION HERS
+        async function runGracefulSignOut() {
+            if (selfProfileListenerCancel) selfProfileListenerCancel();
+            if (teacherMatrixListenerCancel) teacherMatrixListenerCancel();
+            
+            if (currentActiveUserRef) {
+                try {
+                    await updateDoc(currentActiveUserRef, { isOnline: false });
+                } catch (e) { console.error(e); }
+            }
+            
             signOut(auth).then(() => {
                 window.location.href = "/";
             });
         }
 
-        document.getElementById('logout-btn').addEventListener('click', () => {
-            signOut(auth).then(() => {
-                window.location.href = "/";
-            });
+        window.triggerLogoutLive = runGracefulSignOut;
+        document.getElementById('logout-btn').addEventListener('click', runGracefulSignOut);
+
+        // GO OFFLINE AUTOMATICALLY IF WINDOW CLOSES OR DISCONNECTS
+        window.addEventListener('beforeunload', () => {
+            if (currentActiveUserRef) {
+                // Quick asynchronous firestore backup execution
+                updateDoc(currentActiveUserRef, { isOnline: false });
+            }
         });
     </script>
 </body>

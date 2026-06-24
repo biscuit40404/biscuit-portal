@@ -195,7 +195,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
-        import { getFirestore, doc, collection, query, where, onSnapshot, updateDoc, increment, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+        import { getFirestore, doc, collection, query, where, onSnapshot, updateDoc, increment, setDoc, getDoc, getDocs } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 
         const APP_VERSION = "v1.0.0";
         document.getElementById('dashboard-version-node').innerText = `BUILD DEV_${APP_VERSION}`;
@@ -235,9 +235,9 @@
                     if (!snapshot.exists()) {
                         document.getElementById('loading-status').innerText = "Registering default dashboard credentials...";
                         try {
+                            // MATCHES ALL CURRENT DEFAULT REGISTRATION NAMING CONVENTIONS
                             await setDoc(currentActiveUserRef, {
                                 username: user.displayName || user.email.split('@')[0],
-                                usernameLowercase: (user.displayName || user.email.split('@')[0]).toLowerCase(),
                                 email: user.email,
                                 role: "student", 
                                 warnings: 0,
@@ -414,29 +414,53 @@
                     }
 
                     try {
+                        // 1. Verify educator authorization coupon code token
                         const codeVerificationRef = doc(db, "teacher_codes", enteredCode);
                         const codeSnapshot = await getDoc(codeVerificationRef);
 
-                        if (codeSnapshot.exists() && codeSnapshot.data().isValid === true) {
-                            // FIX WORKED IN HERE SAFELY: 
-                            await updateDoc(currentActiveUserRef, {
-                                username: chosenUsername,
-                                usernameLowercase: chosenUsername.toLowerCase(), 
-                                role: "teacher"
-                            });
-                            
-                            document.getElementById('portal-modal').classList.remove('active');
-                            
-                            triggerPortalModal({
-                                title: "Clearance Level Upgraded",
-                                message: `Identity verified successfully. Welcome to the portal faculty, @${chosenUsername}!`,
-                                icon: "✅",
-                                confirmText: "Enter Portal",
-                                showCancel: false
-                            });
-                        } else {
+                        if (!codeSnapshot.exists() || codeSnapshot.data().isValid !== true) {
                             flashModalError("Access Denied: Invalid verification authorization code.");
+                            return;
                         }
+
+                        // 2. CASE-INSENSITIVE DUPLICATE SCAN (Pulling collection to prevent case-shifting bypass)
+                        const allUsersSnapshot = await getDocs(collection(db, "users"));
+                        let isNameTaken = false;
+                        const lowerInput = chosenUsername.toLowerCase();
+
+                        allUsersSnapshot.forEach((userDoc) => {
+                            const data = userDoc.data();
+                            // If any stored username matches our lowercase input, track it as taken
+                            if (data.username && data.username.toLowerCase() === lowerInput) {
+                                // Ignore check if it happens to be the current user's old name
+                                if (userDoc.id !== auth.currentUser.uid) {
+                                    isNameTaken = true;
+                                }
+                            }
+                        });
+
+                        if (isNameTaken) {
+                            flashModalError("Error: This username is already taken. Please choose another.");
+                            return;
+                        }
+
+                        // 3. SECURE PROPERTY SYNCHRONIZATION
+                        // Drops any unmapped fields entirely, keeping only the exact standard fields.
+                        await updateDoc(currentActiveUserRef, {
+                            username: chosenUsername,
+                            role: "teacher"
+                        });
+                        
+                        document.getElementById('portal-modal').classList.remove('active');
+                        
+                        triggerPortalModal({
+                            title: "Clearance Level Upgraded",
+                            message: `Identity verified successfully. Welcome to the portal faculty, @${chosenUsername}!`,
+                            icon: "✅",
+                            confirmText: "Enter Portal",
+                            showCancel: false
+                        });
+                        
                     } catch(err) {
                         flashModalError(`Network Error: ${err.message}`);
                     }

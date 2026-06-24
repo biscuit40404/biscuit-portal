@@ -31,7 +31,6 @@
         <p id="message"></p>
     </div>
 
-    <!-- Firebase Integration Script using Version 12.15.0 -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
@@ -86,8 +85,11 @@
                 // Log In existing student
                 signInWithEmailAndPassword(auth, email, password)
                     .then((userCredential) => {
-                        messageDisplay.innerText = "Success! Logged in as " + userCredential.user.email;
+                        messageDisplay.innerText = "Success! Loading dashboard...";
                         messageDisplay.style.color = "#27ae60";
+                        
+                        // REDIRECT TO THE SECURE DASHBOARD SHELL
+                        window.location.href = "/dashboard";
                     })
                     .catch((error) => {
                         messageDisplay.innerText = "Error: " + error.message;

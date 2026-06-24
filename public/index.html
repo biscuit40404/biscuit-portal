@@ -8,26 +8,14 @@
         body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; position: relative; }
         .card { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; max-width: 400px; width: 100%; z-index: 2; }
         h1 { color: #2c3e50; margin-bottom: 20px; }
-        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+        input, select { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
         .btn { width: 100%; background: #3498db; color: white; padding: 12px; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; transition: background 0.2s; margin-top: 10px; }
         .btn:hover { background: #2980b9; }
         .toggle-text { margin-top: 20px; color: #7f8c8d; font-size: 14px; cursor: pointer; }
         .toggle-text span { color: #3498db; font-weight: bold; }
         #message { margin-top: 15px; font-weight: bold; font-size: 14px; }
-        #username-group { display: none; }
-
-        .version-stamp {
-            position: fixed;
-            bottom: 16px;
-            right: 16px;
-            font-size: 12px;
-            font-weight: 600;
-            color: #94a3b8;
-            font-family: monospace;
-            letter-spacing: 0.5px;
-            user-select: none;
-            pointer-events: none;
-        }
+        #username-group, #school-group { display: none; }
+        .version-stamp { position: fixed; bottom: 16px; right: 16px; font-size: 12px; font-weight: 600; color: #94a3b8; font-family: monospace; letter-spacing: 0.5px; user-select: none; pointer-events: none; }
     </style>
 </head>
 <body>
@@ -38,6 +26,19 @@
         
         <div id="username-group">
             <input type="text" id="username" placeholder="Choose a unique username">
+        </div>
+
+        <div id="school-group">
+            <select id="grade">
+                <option value="Prep 2">Prep 2</option>
+            </select>
+            <select id="class">
+                <option value="" disabled selected>Select Your Class</option>
+                <option value="2/A">2/A</option>
+                <option value="2/B">2/B</option>
+                <option value="2/C">2/C</option>
+                <option value="2/D">2/D</option>
+            </select>
         </div>
         
         <input type="email" id="email" placeholder="Enter student email">
@@ -56,8 +57,7 @@
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
         import { getFirestore, doc, setDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 
-        // MANUAL VERSIONING: Change this string whenever you want to update your version manually!
-        const APP_VERSION = "v1.0.0";
+        const APP_VERSION = "v1.1.0";
         document.getElementById('version-display-node').innerText = APP_VERSION;
 
         const firebaseConfig = {
@@ -77,7 +77,10 @@
         const authBtn = document.getElementById('auth-btn');
         const toggleForm = document.getElementById('toggle-form');
         const usernameGroup = document.getElementById('username-group');
+        const schoolGroup = document.getElementById('school-group');
         const usernameInput = document.getElementById('username');
+        const gradeInput = document.getElementById('grade');
+        const classInput = document.getElementById('class');
         const emailInput = document.getElementById('email');
         const passwordInput = document.getElementById('password');
         const messageDisplay = document.getElementById('message');
@@ -86,24 +89,17 @@
         let isRegisteringNow = false;
 
         onAuthStateChanged(auth, (user) => {
-            if (user && !isRegisteringNow) {
-                window.location.href = "/dashboard";
-            }
+            if (user && !isRegisteringNow) window.location.href = "/dashboard";
         });
 
         toggleForm.addEventListener('click', () => {
             isLoginMode = !isLoginMode;
-            if (isLoginMode) {
-                formTitle.innerText = "Student Login";
-                authBtn.innerText = "Log In";
-                usernameGroup.style.display = "none";
-                toggleForm.innerHTML = "Don't have an account? <span>Register here</span>";
-            } else {
-                formTitle.innerText = "Create Student Account";
-                authBtn.innerText = "Register";
-                usernameGroup.style.display = "block";
-                toggleForm.innerHTML = "Already have an account? <span>Log in here</span>";
-            }
+            const display = isLoginMode ? "none" : "block";
+            formTitle.innerText = isLoginMode ? "Student Login" : "Create Student Account";
+            authBtn.innerText = isLoginMode ? "Log In" : "Register";
+            usernameGroup.style.display = display;
+            schoolGroup.style.display = display;
+            toggleForm.innerHTML = isLoginMode ? "Don't have an account? <span>Register here</span>" : "Already have an account? <span>Log in here</span>";
             messageDisplay.innerText = "";
         });
 
@@ -111,70 +107,42 @@
             const email = emailInput.value.trim();
             const password = passwordInput.value;
             const username = usernameInput.value.trim();
-
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            
-            if (!emailRegex.test(email)) {
-                messageDisplay.innerText = "Error: Please enter a valid email format.";
-                messageDisplay.style.color = "#c0392b";
-                return;
-            }
-
-            if (password.length < 6) {
-                messageDisplay.innerText = "Error: Password must be at least 6 characters long.";
-                messageDisplay.style.color = "#c0392b";
-                return;
-            }
-
-            messageDisplay.innerText = "Processing... ";
-            messageDisplay.style.color = "#2c3e50";
+            const grade = gradeInput.value;
+            const studentClass = classInput.value;
 
             if (isLoginMode) {
                 signInWithEmailAndPassword(auth, email, password)
-                    .then(() => {
-                        window.location.href = "/dashboard";
-                    })
-                    .catch((error) => {
-                        messageDisplay.innerText = "Error: " + error.message;
-                        messageDisplay.style.color = "#c0392b";
-                    });
+                    .then(() => window.location.href = "/dashboard")
+                    .catch((e) => messageDisplay.innerText = "Error: " + e.message);
             } else {
-                if (!username) {
-                    messageDisplay.innerText = "Error: Please choose a username.";
-                    messageDisplay.style.color = "#c0392b";
+                if (!username || !studentClass) {
+                    messageDisplay.innerText = "Error: Username and Class selection are required.";
                     return;
                 }
-
                 try {
-                    const lowerCheck = username.toLowerCase();
-                    const q = query(collection(db, "users"), where("username_lower", "==", lowerCheck));
-                    const querySnapshot = await getDocs(q);
-
-                    if (!querySnapshot.empty) {
-                        messageDisplay.innerText = "Error: That username is taken, even with different capitals!";
-                        messageDisplay.style.color = "#c0392b";
+                    const q = query(collection(db, "users"), where("username_lower", "==", username.toLowerCase()));
+                    if (!(await getDocs(q)).empty) {
+                        messageDisplay.innerText = "Error: Username taken.";
                         return;
                     }
-
                     isRegisteringNow = true;
-                    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                    const user = userCredential.user;
-                    
-                    await updateProfile(user, { displayName: username });
-                    
-                    await setDoc(doc(db, "users", user.uid), {
-                        username: username,
-                        username_lower: lowerCheck, 
-                        email: email,
-                        role: "student"
+                    const cred = await createUserWithEmailAndPassword(auth, email, password);
+                    await updateProfile(cred.user, { displayName: username });
+                    await setDoc(doc(db, "users", cred.user.uid), {
+                        username,
+                        username_lower: username.toLowerCase(),
+                        email,
+                        grade,
+                        class: studentClass,
+                        role: "student",
+                        warnings: 0,
+                        isRestricted: false,
+                        isOnline: true
                     });
-
                     window.location.href = "/dashboard";
-
-                } catch (error) {
+                } catch (e) {
                     isRegisteringNow = false;
-                    messageDisplay.innerText = "Error: " + error.message;
-                    messageDisplay.style.color = "#c0392b";
+                    messageDisplay.innerText = "Error: " + e.message;
                 }
             }
         });

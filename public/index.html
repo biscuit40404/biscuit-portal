@@ -3,21 +3,109 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Biscuit Portal - Home</title>
+    <title>Biscuit Portal - Login</title>
     <style>
         body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
         .card { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; max-width: 400px; width: 100%; }
-        h1 { color: #2c3e50; margin-bottom: 10px; }
-        p { color: #7f8c8d; margin-bottom: 30px; }
-        .btn { display: inline-block; background: #3498db; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; transition: background 0.2s; }
+        h1 { color: #2c3e50; margin-bottom: 20px; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+        .btn { width: 100%; background: #3498db; color: white; padding: 12px; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; transition: background 0.2s; margin-top: 10px; }
         .btn:hover { background: #2980b9; }
+        .toggle-text { margin-top: 20px; color: #7f8c8d; font-size: 14px; cursor: pointer; }
+        .toggle-text span { color: #3498db; font-weight: bold; }
+        #message { margin-top: 15px; font-weight: bold; font-size: 14px; }
     </style>
 </head>
 <body>
+
     <div class="card">
         <h1>🍪 Biscuit Portal</h1>
-        <p>Welcome to the central hub. Student accounts and assignment tracking are initializing soon.</p>
-        <a href="#" class="btn">Student Login Coming Soon</a>
+        <h2 id="form-title">Student Login</h2>
+        
+        <input type="email" id="email" placeholder="Enter student email">
+        <input type="password" id="password" placeholder="Enter password">
+        
+        <button id="auth-btn" class="btn">Log In</button>
+        
+        <p class="toggle-text" id="toggle-form">Don't have an account? <span>Register here</span></p>
+        <p id="message"></p>
     </div>
+
+    <!-- Firebase Integration Script using Version 12.15.0 -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
+
+        // Your exact Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDHBQ20Oan5NYyVbyf-0PMrIBGSNJKLYNY",
+            authDomain: "biscuit-portal-1547d.firebaseapp.com",
+            projectId: "biscuit-portal-1547d",
+            storageBucket: "biscuit-portal-1547d.firebasestorage.app",
+            messagingSenderId: "426645012012",
+            appId: "1:426645012012:web:cc8d2992c474c40eaa9b89"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        // DOM Elements
+        const formTitle = document.getElementById('form-title');
+        const authBtn = document.getElementById('auth-btn');
+        const toggleForm = document.getElementById('toggle-form');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const messageDisplay = document.getElementById('message');
+
+        let isLoginMode = true;
+
+        // Toggle between Login and Registration mode
+        toggleForm.addEventListener('click', () => {
+            isLoginMode = !isLoginMode;
+            if (isLoginMode) {
+                formTitle.innerText = "Student Login";
+                authBtn.innerText = "Log In";
+                toggleForm.innerHTML = "Don't have an account? <span>Register here</span>";
+            } else {
+                formTitle.innerText = "Create Student Account";
+                authBtn.innerText = "Register";
+                toggleForm.innerHTML = "Already have an account? <span>Log in here</span>";
+            }
+            messageDisplay.innerText = "";
+        });
+
+        // Handle Form Submission
+        authBtn.addEventListener('click', () => {
+            const email = emailInput.value;
+            const password = passwordInput.value;
+            messageDisplay.innerText = "Processing...";
+            messageDisplay.style.color = "#2c3e50";
+
+            if (isLoginMode) {
+                // Log In existing student
+                signInWithEmailAndPassword(auth, email, password)
+                    .then((userCredential) => {
+                        messageDisplay.innerText = "Success! Logged in as " + userCredential.user.email;
+                        messageDisplay.style.color = "#27ae60";
+                    })
+                    .catch((error) => {
+                        messageDisplay.innerText = "Error: " + error.message;
+                        messageDisplay.style.color = "#c0392b";
+                    });
+            } else {
+                // Register new student
+                createUserWithEmailAndPassword(auth, email, password)
+                    .then((userCredential) => {
+                        messageDisplay.innerText = "Account created successfully! You can now log in.";
+                        messageDisplay.style.color = "#27ae60";
+                    })
+                    .catch((error) => {
+                        messageDisplay.innerText = "Error: " + error.message;
+                        messageDisplay.style.color = "#c0392b";
+                    });
+            }
+        });
+    </script>
 </body>
 </html>

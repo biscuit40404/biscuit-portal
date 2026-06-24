@@ -33,7 +33,7 @@
 <body>
 
     <div class="card">
-        <h1>🍪 Biscuit Portal!</h1>
+        <h1>🍪 Biscuit Portal</h1>
         <h2 id="form-title">Student Login</h2>
         
         <div id="username-group">
@@ -52,12 +52,18 @@
     <div class="version-stamp" id="version-display-node">Loading...</div>
 
     <script type="module">
-        import { APP_VERSION } from "./version.js";
-        
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
         import { getFirestore, doc, setDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 
+        // Safe loader: If version.js is missing, it won't crash the buttons anymore
+        let APP_VERSION = "Dev Mode";
+        try {
+            const versionModule = await import("./version.js");
+            APP_VERSION = versionModule.APP_VERSION;
+        } catch (err) {
+            console.log("Version file not generated yet by the robot.");
+        }
         document.getElementById('version-display-node').innerText = APP_VERSION;
 
         const firebaseConfig = {

@@ -49,12 +49,11 @@
         <p id="message"></p>
     </div>
 
-    <div class="version-stamp">v1.1.1</div>
+    <div class="version-stamp">v1.1.2</div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
-        // ADDED EXTRA FIRESTORE QUERY TOOLS HERE
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
         import { getFirestore, doc, setDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -80,6 +79,14 @@
         const messageDisplay = document.getElementById('message');
 
         let isLoginMode = true;
+        let isRegisteringNow = false; // Prevents race-condition redirects during creation
+
+        // 🔄 THE PERSISTENCE GUARD: Checks if a user is already logged in on boot
+        onAuthStateChanged(auth, (user) => {
+            if (user && !isRegisteringNow) {
+                window.location.href = "/dashboard";
+            }
+        });
 
         toggleForm.addEventListener('click', () => {
             isLoginMode = !isLoginMode;
@@ -97,7 +104,6 @@
             messageDisplay.innerText = "";
         });
 
-        // TURNED THIS ASYNC FOR THE DATABASE SCAN
         authBtn.addEventListener('click', async () => {
             const email = emailInput.value.trim();
             const password = passwordInput.value;
@@ -106,7 +112,7 @@
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             
             if (!emailRegex.test(email)) {
-                messageDisplay.innerText = "Error: Please enter a valid email format (e.g., student@school.com).";
+                messageDisplay.innerText = "Error: Please enter a valid email format.";
                 messageDisplay.style.color = "#c0392b";
                 return;
             }
@@ -123,8 +129,6 @@
             if (isLoginMode) {
                 signInWithEmailAndPassword(auth, email, password)
                     .then(() => {
-                        messageDisplay.innerText = "Success! Loading dashboard...";
-                        messageDisplay.style.color = "#27ae60";
                         window.location.href = "/dashboard";
                     })
                     .catch((error) => {
@@ -139,32 +143,35 @@
                 }
 
                 try {
-                    // LIVE UNIQUE USERNAME SCAN
-                    const q = query(collection(db, "users"), where("username", "==", username));
+                    // 🛡️ CASE-INSENSITIVE DUPLICATE SCAN
+                    const lowerCheck = username.toLowerCase();
+                    const q = query(collection(db, "users"), where("username_lower", "==", lowerCheck));
                     const querySnapshot = await getDocs(q);
 
                     if (!querySnapshot.empty) {
-                        messageDisplay.innerText = "Error: This username is already taken! Try another one.";
+                        messageDisplay.innerText = "Error: That username is taken, even with different capitals!";
                         messageDisplay.style.color = "#c0392b";
-                        return; // Blocks registration entirely
+                        return;
                     }
 
-                    // Proceed only if name is completely unique
+                    isRegisteringNow = true; // Engage lock flag
                     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                     const user = userCredential.user;
                     
                     await updateProfile(user, { displayName: username });
+                    
+                    // Save both the clean display username AND the normalized verification index
                     await setDoc(doc(db, "users", user.uid), {
                         username: username,
+                        username_lower: lowerCheck, 
                         email: email,
                         role: "student"
                     });
 
-                    messageDisplay.innerText = "Account verified! Launching dashboard layout...";
-                    messageDisplay.style.color = "#27ae60";
                     window.location.href = "/dashboard";
 
                 } catch (error) {
+                    isRegisteringNow = false; // Release lock flag on error
                     messageDisplay.innerText = "Error: " + error.message;
                     messageDisplay.style.color = "#c0392b";
                 }

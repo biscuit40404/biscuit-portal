@@ -14,6 +14,8 @@
         .toggle-text { margin-top: 20px; color: #7f8c8d; font-size: 14px; cursor: pointer; }
         .toggle-text span { color: #3498db; font-weight: bold; }
         #message { margin-top: 15px; font-weight: bold; font-size: 14px; }
+        /* Username box hidden by default on login */
+        #username-group { display: none; }
     </style>
 </head>
 <body>
@@ -21,6 +23,10 @@
     <div class="card">
         <h1>🍪 Biscuit Portal</h1>
         <h2 id="form-title">Student Login</h2>
+        
+        <div id="username-group">
+            <input type="text" id="username" placeholder="Choose a unique username">
+        </div>
         
         <input type="email" id="email" placeholder="Enter student email">
         <input type="password" id="password" placeholder="Enter password">
@@ -33,11 +39,9 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
-        // IMPORT FIRESTORE TOOLS
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
         import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 
-        // Your exact Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyDHBQ20Oan5NYyVbyf-0PMrIBGSNJKLYNY",
             authDomain: "biscuit-portal-1547d.firebaseapp.com",
@@ -47,47 +51,64 @@
             appId: "1:426645012012:web:cc8d2992c474c40eaa9b89"
         };
 
-        // Initialize Firebase services
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
-        const db = getFirestore(app); // Connect to your Firestore database
+        const db = getFirestore(app);
 
-        // DOM Elements
         const formTitle = document.getElementById('form-title');
         const authBtn = document.getElementById('auth-btn');
         const toggleForm = document.getElementById('toggle-form');
+        const usernameGroup = document.getElementById('username-group');
+        const usernameInput = document.getElementById('username');
         const emailInput = document.getElementById('email');
         const passwordInput = document.getElementById('password');
         const messageDisplay = document.getElementById('message');
 
         let isLoginMode = true;
 
-        // Toggle between Login and Registration mode
         toggleForm.addEventListener('click', () => {
             isLoginMode = !isLoginMode;
             if (isLoginMode) {
                 formTitle.innerText = "Student Login";
                 authBtn.innerText = "Log In";
+                usernameGroup.style.display = "none";
                 toggleForm.innerHTML = "Don't have an account? <span>Register here</span>";
             } else {
                 formTitle.innerText = "Create Student Account";
                 authBtn.innerText = "Register";
+                usernameGroup.style.display = "block";
                 toggleForm.innerHTML = "Already have an account? <span>Log in here</span>";
             }
             messageDisplay.innerText = "";
         });
 
-        // Handle Form Submission
         authBtn.addEventListener('click', () => {
-            const email = emailInput.value;
+            const email = emailInput.value.trim();
             const password = passwordInput.value;
+            const username = usernameInput.value.trim();
+
+            // STRICT INPUT VALIDATION FILTER
+            // Checks for string@domain.extension (e.g., stops things like 1234@asdasd with no .com/.net/.edu)
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            
+            if (!emailRegex.test(email)) {
+                messageDisplay.innerText = "Error: Please enter a valid email format (e.g., student@school.com).";
+                messageDisplay.style.color = "#c0392b";
+                return;
+            }
+
+            if (password.length < 6) {
+                messageDisplay.innerText = "Error: Password must be at least 6 characters long.";
+                messageDisplay.style.color = "#c0392b";
+                return;
+            }
+
             messageDisplay.innerText = "Processing...";
             messageDisplay.style.color = "#2c3e50";
 
             if (isLoginMode) {
-                // Log In existing student
                 signInWithEmailAndPassword(auth, email, password)
-                    .then((userCredential) => {
+                    .then(() => {
                         messageDisplay.innerText = "Success! Loading dashboard...";
                         messageDisplay.style.color = "#27ae60";
                         window.location.href = "/dashboard";
@@ -97,20 +118,32 @@
                         messageDisplay.style.color = "#c0392b";
                     });
             } else {
-                // Register new student
+                if (!username) {
+                    messageDisplay.innerText = "Error: Please choose a username.";
+                    messageDisplay.style.color = "#c0392b";
+                    return;
+                }
+
                 createUserWithEmailAndPassword(auth, email, password)
                     .then((userCredential) => {
                         const user = userCredential.user;
                         
-                        // DB WRITE: Create a document for this specific user inside a "users" collection
-                        return setDoc(doc(db, "users", user.uid), {
-                            email: email,
-                            role: "student" // Everyone starts out automatically as a student
+                        // 1. Write the username into Firebase Auth's profile system
+                        return updateProfile(user, { displayName: username }).then(() => {
+                            // 2. Write the username and role into the Firestore Database
+                            return setDoc(doc(db, "users", user.uid), {
+                                username: username,
+                                email: email,
+                                role: "student"
+                            });
                         });
                     })
                     .then(() => {
-                        messageDisplay.innerText = "Account created successfully with student profile! You can now log in.";
+                        messageDisplay.innerText = "Account verified & registered! You can now log in.";
                         messageDisplay.style.color = "#27ae60";
+                        // Flip view back to login automatically
+                        toggleForm.click();
+                        emailInput.value = email;
                     })
                     .catch((error) => {
                         messageDisplay.innerText = "Error: " + error.message;

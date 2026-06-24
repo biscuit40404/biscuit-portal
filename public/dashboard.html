@@ -129,15 +129,9 @@
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
         import { getFirestore, doc, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 
-        // Safe loader: If version.js is missing, it won't crash the dashboard dashboard metrics
-        let APP_VERSION = "Dev Mode";
-        try {
-            const versionModule = await import("./version.js");
-            APP_VERSION = versionModule.APP_VERSION;
-        } catch (err) {
-            console.log("Version file not generated yet by the robot.");
-        }
-        document.getElementById('dashboard-version-node').innerText = `BUILD_${APP_VERSION}`;
+        // MANUAL VERSIONING: Match this with your index.html version string
+        const APP_VERSION = "v1.0.0";
+        document.getElementById('dashboard-version-node').innerText = `BUILD DEV_${APP_VERSION}`;
 
         const firebaseConfig = {
             apiKey: "AIzaSyDHBQ20Oan5NYyVbyf-0PMrIBGSNJKLYNY",

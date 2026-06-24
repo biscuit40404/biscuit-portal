@@ -69,7 +69,7 @@
         .btn-mute { background: #fee2e2; color: var(--accent-red); }
         .btn-mute:hover { background: #fecaca; }
         
-        /* New Unrestrict Action Button Aesthetics */
+        /* Unrestrict Action Button Aesthetics */
         .btn-unrestrict { background: #d1fae5; color: #065f46; }
         .btn-unrestrict:hover { background: #a7f3d0; }
 
@@ -102,9 +102,9 @@
 
     <div id="portal-modal" class="modal-overlay">
         <div class="modal-box">
-            <div id="modal-icon" class="modal-icon"></div>
-            <div id="modal-title" class="modal-title"></div>
-            <div id="modal-message" class="modal-msg"></div>
+            <div id="modal-icon" class="modal-icon">ℹ️</div>
+            <div id="modal-title" class="modal-title">System Status</div>
+            <div id="modal-message" class="modal-msg">Loading request nodes...</div>
             <div class="modal-actions">
                 <button id="modal-cancel-btn" class="btn-modal btn-modal-cancel">Cancel</button>
                 <button id="modal-confirm-btn" class="btn-modal btn-modal-confirm">Confirm</button>
@@ -168,8 +168,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
-        import { getFirestore, doc, collection, query, where, onSnapshot, updateDoc, increment } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
-        import { getFirestore as initFirestore } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+        import { getFirestore, doc, collection, query, where, onSnapshot, updateDoc, increment } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 
         const APP_VERSION = "v1.0.0";
         document.getElementById('dashboard-version-node').innerText = `BUILD DEV_${APP_VERSION}`;
@@ -185,7 +184,7 @@
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
-        const db = initFirestore(app);
+        const db = getFirestore(app);
 
         let currentActiveUserRef = null;
         let selfProfileListenerCancel = null;
@@ -195,14 +194,18 @@
             if (user) {
                 currentActiveUserRef = doc(db, "users", user.uid);
                 
-                // Set identity footprint trace indicator
-                await updateDoc(currentActiveUserRef, { isOnline: true });
+                try {
+                    // Set status to online in database
+                    await updateDoc(currentActiveUserRef, { isOnline: true });
+                } catch(e) {
+                    console.error("Failed to set online footprint presence:", e);
+                }
 
                 selfProfileListenerCancel = onSnapshot(currentActiveUserRef, (snapshot) => {
                     if (!snapshot.exists()) return;
                     const userData = snapshot.data();
 
-                    // Real-time access interceptor logic
+                    // Real-time access lockout interceptor
                     if (userData.isRestricted === true) {
                         showLockoutScreen();
                         if (selfProfileListenerCancel) selfProfileListenerCancel();
@@ -365,7 +368,7 @@
             });
         };
 
-        // NEW UNRESTRICT OPERATOR: Clears suspension flag instantly
+        // UNRESTRICT OPERATOR: Clears suspension flag instantly
         window.unrestrictAccessLive = function(uid, username) {
             triggerPortalModal({
                 title: "Lift Student Profile Restriction",

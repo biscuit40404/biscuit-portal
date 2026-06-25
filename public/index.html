@@ -15,7 +15,19 @@
         .toggle-text span { color: #3498db; font-weight: bold; }
         #message { margin-top: 15px; font-weight: bold; font-size: 14px; }
         #username-group, #school-group { display: none; }
-        .version-stamp { position: fixed; bottom: 16px; right: 16px; font-size: 12px; font-weight: 600; color: #94a3b8; font-family: monospace; letter-spacing: 0.5px; user-select: none; pointer-events: none; }
+
+        .version-stamp {
+            position: fixed;
+            bottom: 16px;
+            right: 16px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #94a3b8;
+            font-family: monospace;
+            letter-spacing: 0.5px;
+            user-select: none;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body>
@@ -89,17 +101,26 @@
         let isRegisteringNow = false;
 
         onAuthStateChanged(auth, (user) => {
-            if (user && !isRegisteringNow) window.location.href = "/dashboard";
+            if (user && !isRegisteringNow) {
+                window.location.href = "/dashboard";
+            }
         });
 
         toggleForm.addEventListener('click', () => {
             isLoginMode = !isLoginMode;
-            const display = isLoginMode ? "none" : "block";
-            formTitle.innerText = isLoginMode ? "Student Login" : "Create Student Account";
-            authBtn.innerText = isLoginMode ? "Log In" : "Register";
-            usernameGroup.style.display = display;
-            schoolGroup.style.display = display;
-            toggleForm.innerHTML = isLoginMode ? "Don't have an account? <span>Register here</span>" : "Already have an account? <span>Log in here</span>";
+            if (isLoginMode) {
+                formTitle.innerText = "Student Login";
+                authBtn.innerText = "Log In";
+                usernameGroup.style.display = "none";
+                schoolGroup.style.display = "none";
+                toggleForm.innerHTML = "Don't have an account? <span>Register here</span>";
+            } else {
+                formTitle.innerText = "Create Student Account";
+                authBtn.innerText = "Register";
+                usernameGroup.style.display = "block";
+                schoolGroup.style.display = "block";
+                toggleForm.innerHTML = "Already have an account? <span>Log in here</span>";
+            }
             messageDisplay.innerText = "";
         });
 
@@ -110,39 +131,80 @@
             const grade = gradeInput.value;
             const studentClass = classInput.value;
 
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            
+            if (!emailRegex.test(email)) {
+                messageDisplay.innerText = "Error: Please enter a valid email format.";
+                messageDisplay.style.color = "#c0392b";
+                return;
+            }
+
+            if (password.length < 6) {
+                messageDisplay.innerText = "Error: Password must be at least 6 characters long.";
+                messageDisplay.style.color = "#c0392b";
+                return;
+            }
+
+            messageDisplay.innerText = "Processing... ";
+            messageDisplay.style.color = "#2c3e50";
+
             if (isLoginMode) {
                 signInWithEmailAndPassword(auth, email, password)
-                    .then(() => window.location.href = "/dashboard")
-                    .catch((e) => messageDisplay.innerText = "Error: " + e.message);
+                    .then(() => {
+                        window.location.href = "/dashboard";
+                    })
+                    .catch((error) => {
+                        messageDisplay.innerText = "Error: " + error.message;
+                        messageDisplay.style.color = "#c0392b";
+                    });
             } else {
-                if (!username || !studentClass) {
-                    messageDisplay.innerText = "Error: Username and Class selection are required.";
+                if (!username) {
+                    messageDisplay.innerText = "Error: Please choose a username.";
+                    messageDisplay.style.color = "#c0392b";
                     return;
                 }
+
+                if (!studentClass) {
+                    messageDisplay.innerText = "Error: Please select your class section.";
+                    messageDisplay.style.color = "#c0392b";
+                    return;
+                }
+
                 try {
-                    const q = query(collection(db, "users"), where("username_lower", "==", username.toLowerCase()));
-                    if (!(await getDocs(q)).empty) {
-                        messageDisplay.innerText = "Error: Username taken.";
+                    const lowerCheck = username.toLowerCase();
+                    const q = query(collection(db, "users"), where("username_lower", "==", lowerCheck));
+                    const querySnapshot = await getDocs(q);
+
+                    if (!querySnapshot.empty) {
+                        messageDisplay.innerText = "Error: That username is taken, even with different capitals!";
+                        messageDisplay.style.color = "#c0392b";
                         return;
                     }
+
                     isRegisteringNow = true;
-                    const cred = await createUserWithEmailAndPassword(auth, email, password);
-                    await updateProfile(cred.user, { displayName: username });
-                    await setDoc(doc(db, "users", cred.user.uid), {
-                        username,
-                        username_lower: username.toLowerCase(),
-                        email,
-                        grade,
+                    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                    const user = userCredential.user;
+                    
+                    await updateProfile(user, { displayName: username });
+                    
+                    await setDoc(doc(db, "users", user.uid), {
+                        username: username,
+                        username_lower: lowerCheck, 
+                        email: email,
+                        grade: grade,
                         class: studentClass,
                         role: "student",
                         warnings: 0,
                         isRestricted: false,
                         isOnline: true
                     });
+
                     window.location.href = "/dashboard";
-                } catch (e) {
+
+                } catch (error) {
                     isRegisteringNow = false;
-                    messageDisplay.innerText = "Error: " + e.message;
+                    messageDisplay.innerText = "Error: " + error.message;
+                    messageDisplay.style.color = "#c0392b";
                 }
             }
         });

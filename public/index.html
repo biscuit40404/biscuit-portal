@@ -9,13 +9,21 @@
         .card { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; max-width: 400px; width: 100%; z-index: 2; }
         h1 { color: #2c3e50; margin-bottom: 20px; }
         input, select { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
-        .btn { width: 100%; background: #3498db; color: white; padding: 12px; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; transition: background 0.2s; margin-top: 10px; }
+        .btn { width: 100%; background: #3498db; color: white; padding: 12px; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; transition: background 0.2s; }
         .btn:hover { background: #2980b9; }
+        .btn:disabled { background: #95a5a6; cursor: not-allowed; }
         .toggle-text { margin-top: 20px; color: #7f8c8d; font-size: 14px; cursor: pointer; }
         .toggle-text span { color: #3498db; font-weight: bold; }
         #message { margin-top: 15px; font-weight: bold; font-size: 14px; }
         #username-group, #school-group { display: none; }
-
+        
+        .password-strength { margin: 10px 0; text-align: left; font-size: 12px; }
+        .strength-item { margin: 4px 0; }
+        .strength-item.valid { color: #27ae60; }
+        .strength-item.invalid { color: #e74c3c; }
+        .strength-item::before { content: "✗ "; font-weight: bold; }
+        .strength-item.valid::before { content: "✓ "; }
+        
         .version-stamp {
             position: fixed;
             bottom: 16px;
@@ -56,6 +64,15 @@
         <input type="email" id="email" placeholder="Enter student email">
         <input type="password" id="password" placeholder="Enter password">
         
+        <!-- Password Strength Indicator (shown during registration) -->
+        <div id="password-strength" class="password-strength" style="display: none;">
+            <div class="strength-item" id="strength-length">At least 12 characters</div>
+            <div class="strength-item" id="strength-upper">At least one uppercase letter (A-Z)</div>
+            <div class="strength-item" id="strength-lower">At least one lowercase letter (a-z)</div>
+            <div class="strength-item" id="strength-number">At least one number (0-9)</div>
+            <div class="strength-item" id="strength-special">At least one special character (!@#$%^&*)</div>
+        </div>
+        
         <button id="auth-btn" class="btn">Log In</button>
         
         <p class="toggle-text" id="toggle-form">Don't have an account? <span>Register here</span></p>
@@ -69,7 +86,7 @@
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
         import { getFirestore, doc, setDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 
-        const APP_VERSION = "v1.1.0";
+        const APP_VERSION = "v1.2.0";
         document.getElementById('version-display-node').innerText = APP_VERSION;
 
         const firebaseConfig = {
@@ -96,9 +113,52 @@
         const emailInput = document.getElementById('email');
         const passwordInput = document.getElementById('password');
         const messageDisplay = document.getElementById('message');
+        const passwordStrengthDiv = document.getElementById('password-strength');
 
         let isLoginMode = true;
         let isRegisteringNow = false;
+
+        // PASSWORD STRENGTH VALIDATOR
+        function validatePasswordStrength(password) {
+            const checks = {
+                length: password.length >= 12,
+                uppercase: /[A-Z]/.test(password),
+                lowercase: /[a-z]/.test(password),
+                number: /[0-9]/.test(password),
+                special: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)
+            };
+
+            // Update UI indicators
+            document.getElementById('strength-length').classList.toggle('valid', checks.length);
+            document.getElementById('strength-length').classList.toggle('invalid', !checks.length);
+            
+            document.getElementById('strength-upper').classList.toggle('valid', checks.uppercase);
+            document.getElementById('strength-upper').classList.toggle('invalid', !checks.uppercase);
+            
+            document.getElementById('strength-lower').classList.toggle('valid', checks.lowercase);
+            document.getElementById('strength-lower').classList.toggle('invalid', !checks.lowercase);
+            
+            document.getElementById('strength-number').classList.toggle('valid', checks.number);
+            document.getElementById('strength-number').classList.toggle('invalid', !checks.number);
+            
+            document.getElementById('strength-special').classList.toggle('valid', checks.special);
+            document.getElementById('strength-special').classList.toggle('invalid', !checks.special);
+
+            // Return true if ALL checks pass
+            return Object.values(checks).every(check => check === true);
+        }
+
+        // Show password strength on input
+        passwordInput.addEventListener('input', () => {
+            if (!isLoginMode) {
+                if (passwordInput.value.length > 0) {
+                    passwordStrengthDiv.style.display = 'block';
+                    validatePasswordStrength(passwordInput.value);
+                } else {
+                    passwordStrengthDiv.style.display = 'none';
+                }
+            }
+        });
 
         onAuthStateChanged(auth, (user) => {
             if (user && !isRegisteringNow) {
@@ -113,12 +173,16 @@
                 authBtn.innerText = "Log In";
                 usernameGroup.style.display = "none";
                 schoolGroup.style.display = "none";
+                passwordStrengthDiv.style.display = "none";
                 toggleForm.innerHTML = "Don't have an account? <span>Register here</span>";
             } else {
                 formTitle.innerText = "Create Student Account";
                 authBtn.innerText = "Register";
                 usernameGroup.style.display = "block";
                 schoolGroup.style.display = "block";
+                if (passwordInput.value.length > 0) {
+                    passwordStrengthDiv.style.display = 'block';
+                }
                 toggleForm.innerHTML = "Already have an account? <span>Log in here</span>";
             }
             messageDisplay.innerText = "";
@@ -131,18 +195,67 @@
             const grade = gradeInput.value;
             const studentClass = classInput.value;
 
+            // ENHANCED EMAIL VALIDATION (RFC 5322 simplified)
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             
             if (!emailRegex.test(email)) {
-                messageDisplay.innerText = "Error: Please enter a valid email format.";
+                messageDisplay.innerText = "Error: Please enter a valid email format (e.g., user@example.com).";
                 messageDisplay.style.color = "#c0392b";
                 return;
             }
 
-            if (password.length < 6) {
-                messageDisplay.innerText = "Error: Password must be at least 6 characters long.";
+            // Check for common invalid email patterns
+            const invalidEmailPatterns = [
+                /^[^@]*\d+$/, // only numbers before @
+                /@.*\.{2,}/, // double dots in domain
+                /\s/, // whitespace
+            ];
+
+            if (invalidEmailPatterns.some(pattern => pattern.test(email))) {
+                messageDisplay.innerText = "Error: Email address contains invalid characters or format.";
                 messageDisplay.style.color = "#c0392b";
                 return;
+            }
+
+            // STRONGER PASSWORD REQUIREMENTS
+            if (isLoginMode) {
+                // LOGIN MODE - basic validation
+                if (password.length < 1) {
+                    messageDisplay.innerText = "Error: Password cannot be empty.";
+                    messageDisplay.style.color = "#c0392b";
+                    return;
+                }
+            } else {
+                // REGISTRATION MODE - strict requirements
+                if (password.length < 12) {
+                    messageDisplay.innerText = "Error: Password must be at least 12 characters long.";
+                    messageDisplay.style.color = "#c0392b";
+                    return;
+                }
+
+                if (!/[A-Z]/.test(password)) {
+                    messageDisplay.innerText = "Error: Password must contain at least one uppercase letter (A-Z).";
+                    messageDisplay.style.color = "#c0392b";
+                    return;
+                }
+
+                if (!/[a-z]/.test(password)) {
+                    messageDisplay.innerText = "Error: Password must contain at least one lowercase letter (a-z).";
+                    messageDisplay.style.color = "#c0392b";
+                    return;
+                }
+
+                if (!/[0-9]/.test(password)) {
+                    messageDisplay.innerText = "Error: Password must contain at least one number (0-9).";
+                    messageDisplay.style.color = "#c0392b";
+                    return;
+                }
+
+                if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+                    messageDisplay.innerText = "Error: Password must contain at least one special character (!@#$%^&*).";
+                    messageDisplay.style.color = "#c0392b";
+                    return;
+                }
             }
 
             messageDisplay.innerText = "Processing... ";
@@ -164,6 +277,18 @@
                     return;
                 }
 
+                if (username.length < 3) {
+                    messageDisplay.innerText = "Error: Username must be at least 3 characters long.";
+                    messageDisplay.style.color = "#c0392b";
+                    return;
+                }
+
+                if (!/^[a-zA-Z0-9_-]+$/.test(username)) {
+                    messageDisplay.innerText = "Error: Username can only contain letters, numbers, underscores, and hyphens.";
+                    messageDisplay.style.color = "#c0392b";
+                    return;
+                }
+
                 if (!studentClass) {
                     messageDisplay.innerText = "Error: Please select your class section.";
                     messageDisplay.style.color = "#c0392b";
@@ -172,11 +297,23 @@
 
                 try {
                     const lowerCheck = username.toLowerCase();
+                    
+                    // BACKEND VALIDATION: Check duplicate username
                     const q = query(collection(db, "users"), where("username_lower", "==", lowerCheck));
                     const querySnapshot = await getDocs(q);
 
                     if (!querySnapshot.empty) {
                         messageDisplay.innerText = "Error: That username is taken, even with different capitals!";
+                        messageDisplay.style.color = "#c0392b";
+                        return;
+                    }
+
+                    // BACKEND VALIDATION: Check if email already registered
+                    const emailCheck = query(collection(db, "users"), where("email", "==", email.toLowerCase()));
+                    const emailSnapshot = await getDocs(emailCheck);
+
+                    if (!emailSnapshot.empty) {
+                        messageDisplay.innerText = "Error: This email is already registered. Please use a different email or log in.";
                         messageDisplay.style.color = "#c0392b";
                         return;
                     }
@@ -187,16 +324,18 @@
                     
                     await updateProfile(user, { displayName: username });
                     
+                    // Store both uppercase and lowercase for comparison + email in lowercase for deduplication
                     await setDoc(doc(db, "users", user.uid), {
                         username: username,
                         username_lower: lowerCheck, 
-                        email: email,
+                        email: email.toLowerCase(),
                         grade: grade,
                         class: studentClass,
                         role: "student",
                         warnings: 0,
                         isRestricted: false,
-                        isOnline: true
+                        isOnline: true,
+                        createdAt: new Date().toISOString()
                     });
 
                     window.location.href = "/dashboard";

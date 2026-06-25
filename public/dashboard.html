@@ -24,7 +24,8 @@
         .sidebar { width: 260px; background-color: var(--sidebar-bg); color: #ffffff; display: flex; flex-direction: column; padding: 24px; box-sizing: border-box; }
         .sidebar-brand { font-size: 20px; font-weight: 800; margin-bottom: 40px; }
         .nav-links { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
-        .nav-item { padding: 12px 16px; border-radius: 8px; cursor: pointer; font-weight: 500; color: #94a3b8; }
+        .nav-item { padding: 12px 16px; border-radius: 8px; cursor: pointer; font-weight: 500; color: #94a3b8; transition: all 0.2s; }
+        .nav-item:hover { background-color: #243249; color: #ffffff; }
         .nav-item.active { background-color: #334155; color: #ffffff; }
 
         .main-content { flex: 1; padding: 40px; box-sizing: border-box; overflow-y: auto; }
@@ -37,6 +38,10 @@
         #user-display { font-size: 14px; font-weight: 600; color: #0f172a; }
         .badge { align-self: flex-start; margin-top: 4px; background: var(--accent-blue); color: white; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
 
+        /* Dashboard Section Switcher Views */
+        .portal-section { display: none; }
+        .portal-section.active-view { display: block; }
+
         .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; margin-bottom: 32px; }
         .card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; padding: 24px; }
         .card h3 { margin-top: 0; color: #0f172a; }
@@ -44,9 +49,15 @@
 
         #warning-banner { display: none; background: #fff7ed; border: 1px solid #ffedd5; border-left: 5px solid var(--accent-warning); padding: 16px; border-radius: 8px; margin-bottom: 24px; color: #c2410c; font-weight: 600; font-size: 14px; }
 
+        #student-hub-zone { display: none; background: #ffffff; border: 1px solid var(--border-color); border-radius: 16px; padding: 24px; margin-top: 32px; box-shadow: 0 4px 12px rgba(0,0,0,0.02); }
+        #student-hub-zone h2 { margin-top: 0; color: #0f172a; font-size: 22px; margin-bottom: 8px; }
+
         #teacher-zone { display: none; background: #ffffff; border: 1px solid var(--border-color); border-radius: 16px; padding: 24px; margin-top: 32px; box-shadow: 0 4px 12px rgba(0,0,0,0.02); }
         #teacher-zone h2 { margin-top: 0; color: #0f172a; font-size: 22px; margin-bottom: 20px; }
         
+        .matrix-header-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+        .matrix-filter-select { padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 14px; color: var(--text-main); font-weight: 600; outline: none; background: #ffffff; cursor: pointer; }
+
         .student-list { display: flex; flex-direction: column; gap: 12px; margin-top: 15px; }
         .student-row { display: flex; justify-content: space-between; align-items: center; padding: 16px; background: #f8fafc; border: 1px solid var(--border-color); border-radius: 10px; }
         .student-name { font-weight: 600; color: #1e293b; display: flex; align-items: center; gap: 8px; }
@@ -74,7 +85,7 @@
         .teacher-upgrade-link { font-size: 12px; color: #64748b; text-decoration: none; font-weight: 600; margin-bottom: 16px; cursor: pointer; transition: color 0.2s; display: inline-flex; align-items: center; gap: 4px; }
         .teacher-upgrade-link:hover { color: var(--accent-green); }
 
-        .btn-logout { background-color: transparent; color: #ef4444; border: 1px solid #fee2e2; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; }
+        .btn-logout { background-color: transparent; color: #ef4444; border: 1px solid #fee2e2; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; text-align: left; }
         .btn-logout:hover { background-color: #fef2f2; }
 
         /* Custom Portal Dialog Structure */
@@ -136,13 +147,48 @@
         </div>
     </div>
 
+    <div id="settings-modal" class="modal-overlay">
+        <div class="modal-box" style="text-align: left;">
+            <div class="modal-title" style="text-align: center; margin-bottom: 16px;">⚙️ Workspace Settings</div>
+            <div class="modal-custom-form">
+                <label>Global Portal Username</label>
+                <input type="text" id="settings-username-input" class="modal-field" placeholder="Updating configuration identity...">
+                
+                <div id="settings-student-fields" style="display: none;">
+                    <label>Registered Base Grade</label>
+                    <input type="text" id="settings-grade-view" class="modal-field" disabled style="background: #f1f5f9; color: #64748b; cursor: not-allowed;">
+                    <label>Assigned Section Node</label>
+                    <input type="text" id="settings-class-view" class="modal-field" disabled style="background: #f1f5f9; color: #64748b; cursor: not-allowed;">
+                </div>
+                
+                <div id="settings-teacher-fields" style="display: none;">
+                    <label style="color: var(--accent-green);">Faculty Matrix Cluster Scope</label>
+                    <p style="font-size: 12px; color: var(--text-muted); margin: 2px 0 8px 0;">Select your priority tracking stream filter default assignment value.</p>
+                    <select id="settings-faculty-default-scope" class="modal-field" style="width:100%; cursor: pointer;">
+                        <option value="All">All Realtime Clusters Combined</option>
+                        <option value="2/A">Prep 2 - Section 2/A Matrix</option>
+                        <option value="2/B">Prep 2 - Section 2/B Matrix</option>
+                        <option value="2/C">Prep 2 - Section 2/C Matrix</option>
+                        <option value="2/D">Prep 2 - Section 2/D Matrix</option>
+                    </select>
+                </div>
+            </div>
+            <div id="settings-error-banner" class="modal-error-display"></div>
+            <div class="modal-actions" style="margin-top: 20px;">
+                <button id="settings-close-btn" class="btn-modal btn-modal-cancel">Dismiss</button>
+                <button id="settings-save-btn" class="btn-modal btn-modal-confirm">Commit Configuration</button>
+            </div>
+        </div>
+    </div>
+
     <div class="app-container">
         <nav class="sidebar">
             <div class="sidebar-brand">🍪 Biscuit Portal</div>
             <ul class="nav-links">
-                <li class="nav-item active">🏠 Overview</li>
-                <li class="nav-item">📚 My Classes</li>
-                <li class="nav-item">📢 Announcements</li>
+                <li class="nav-item active" id="nav-link-overview">🏠 Overview</li>
+                <li class="nav-item" id="nav-link-classes">📚 My Classes / Hub</li>
+                <li class="nav-item" id="nav-link-announcements">📢 Announcements</li>
+                <li class="nav-item" id="nav-link-settings" style="margin-top: 4px; border-top: 1px solid #334155; padding-top: 16px;">⚙️ Settings Panel</li>
             </ul>
             
             <div class="version-sidebar-stamp" id="dashboard-version-node">Loading...</div>
@@ -155,8 +201,8 @@
         <main class="main-content">
             <header class="top-header">
                 <div>
-                    <h1>Welcome Back</h1>
-                    <p style="color: var(--text-muted); margin: 4px 0 0 0; font-size: 14px;">Campus core security parameters active.</p>
+                    <h1 id="dynamic-view-title">Welcome Back</h1>
+                    <p style="color: var(--text-muted); margin: 4px 0 0 0; font-size: 14px;" id="dynamic-view-desc">Campus core security parameters active.</p>
                 </div>
                 
                 <div class="user-profile-card">
@@ -170,25 +216,59 @@
 
             <div id="warning-banner">⚠️ ATTENTION: Formal disciplinary warnings loaded.</div>
 
-            <div class="dashboard-grid">
-                <div class="card">
-                    <h3>📢 Campus Broadcast</h3>
-                    <p>Welcome to your personal interface folder view. Your updates load safely directly from active backend clusters.</p>
+            <div id="section-overview" class="portal-section active-view">
+                <div class="dashboard-grid">
+                    <div class="card">
+                        <h3>📢 Campus Broadcast</h3>
+                        <p>Welcome to your personal interface folder view. Your updates load safely directly from active backend clusters.</p>
+                    </div>
+                    <div class="card">
+                        <h3>🔒 Account Credentials</h3>
+                        <p>Your session profile properties match validation nodes securely. Cross-site scripting checks verified.</p>
+                    </div>
                 </div>
-                <div class="card">
-                    <h3>🔒 Account Credentials</h3>
-                    <p>Your session profile properties match validation nodes securely. Cross-site scripting checks verified.</p>
+
+                <div id="student-hub-zone">
+                    <h2 id="hub-title-node">🏫 Classroom Peer Sync Vector</h2>
+                    <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px;">Real-time communication connection array for your current workspace section track configuration.</p>
+                    <div class="student-list" id="peers-container">
+                        <p style="color: var(--text-muted); font-style: italic;">Binding real-time peer connection hooks...</p>
+                    </div>
+                </div>
+
+                <div id="teacher-zone">
+                    <div class="matrix-header-controls">
+                        <h2>🛠️ Student Management Matrix</h2>
+                        <select id="teacher-matrix-filter-node" class="matrix-filter-select">
+                            <option value="All">View All Students Globally</option>
+                            <option value="2/A">Filter: Class 2/A</option>
+                            <option value="2/B">Filter: Class 2/B</option>
+                            <option value="2/C">Filter: Class 2/C</option>
+                            <option value="2/D">Filter: Class 2/D</option>
+                        </select>
+                    </div>
+                    <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px;">Live student directory cluster synchronized. System actions deploy across nodes instantaneously.</p>
+                    
+                    <div class="student-list" id="students-container">
+                        <p id="loading-students" style="color: var(--text-muted); font-style: italic;">Opening real-time database listener stream...</p>
+                    </div>
                 </div>
             </div>
 
-            <div id="teacher-zone">
-                <h2>🛠️ Student Management Matrix</h2>
-                <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px;">Live student directory cluster synchronized. System actions deploy across nodes instantaneously.</p>
-                
-                <div class="student-list" id="students-container">
-                    <p id="loading-students" style="color: var(--text-muted); font-style: italic;">Opening real-time database listener stream...</p>
+            <div id="section-classes" class="portal-section">
+                <div class="card">
+                    <h3>📚 Academic Roster Management</h3>
+                    <p style="margin-bottom: 0;">Your active grade cluster track registers under standard campus metrics. Switch back to Overview to observe live companion sync coordinates.</p>
                 </div>
             </div>
+
+            <div id="section-announcements" class="portal-section">
+                <div class="card">
+                    <h3>📢 Priority Notice Infrastructure</h3>
+                    <p style="margin-bottom: 0;">No severe backend broadcast interruptions flagged on server infrastructure pipelines today.</p>
+                </div>
+            </div>
+
         </main>
     </div>
 
@@ -197,7 +277,7 @@
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
         import { getFirestore, doc, collection, query, where, onSnapshot, updateDoc, increment, setDoc, getDoc, getDocs } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 
-        const APP_VERSION = "v1.0.0";
+        const APP_VERSION = "v1.1.0";
         document.getElementById('dashboard-version-node').innerText = `BUILD DEV_${APP_VERSION}`;
 
         const firebaseConfig = {
@@ -214,11 +294,60 @@
         const db = getFirestore(app);
 
         let currentActiveUserRef = null;
+        let cachedUserData = null;
         let selfProfileListenerCancel = null;
         let teacherMatrixListenerCancel = null;
+        let studentPeerHubListenerCancel = null;
 
         document.getElementById('loading-status').innerText = "Verifying security handshake credentials...";
 
+        // Realtime View Routing System Engine
+        const navLinkOverview = document.getElementById('nav-link-overview');
+        const navLinkClasses = document.getElementById('nav-link-classes');
+        const navLinkAnnouncements = document.getElementById('nav-link-announcements');
+        const navLinkSettings = document.getElementById('nav-link-settings');
+
+        const sectionOverview = document.getElementById('section-overview');
+        const sectionClasses = document.getElementById('section-classes');
+        const sectionAnnouncements = document.getElementById('section-announcements');
+
+        const titleNode = document.getElementById('dynamic-view-title');
+        const descNode = document.getElementById('dynamic-view-desc');
+
+        function clearViewRoutingState() {
+            [navLinkOverview, navLinkClasses, navLinkAnnouncements, navLinkSettings].forEach(node => node.classList.remove('active'));
+            [sectionOverview, sectionClasses, sectionAnnouncements].forEach(node => node.classList.remove('active-view'));
+        }
+
+        navLinkOverview.addEventListener('click', () => {
+            clearViewRoutingState();
+            navLinkOverview.classList.add('active');
+            sectionOverview.classList.add('active-view');
+            titleNode.innerText = "Welcome Back";
+            descNode.innerText = "Campus core security parameters active.";
+        });
+
+        navLinkClasses.addEventListener('click', () => {
+            clearViewRoutingState();
+            navLinkClasses.classList.add('active');
+            sectionClasses.classList.add('active-view');
+            titleNode.innerText = "📚 Academic Node Directory";
+            descNode.innerText = "Observing verified registration credentials.";
+        });
+
+        navLinkAnnouncements.addEventListener('click', () => {
+            clearViewRoutingState();
+            navLinkAnnouncements.classList.add('active');
+            sectionAnnouncements.classList.add('active-view');
+            titleNode.innerText = "📢 Operational Alerts Hub";
+            descNode.innerText = "Live infrastructure monitoring systems active.";
+        });
+
+        navLinkSettings.addEventListener('click', () => {
+            openSystemSettingsModal();
+        });
+
+        // Auth Engine Observer Wire
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 document.getElementById('loading-status').innerText = "Mapping database path coordinates...";
@@ -235,12 +364,13 @@
                     if (!snapshot.exists()) {
                         document.getElementById('loading-status').innerText = "Registering default dashboard credentials...";
                         try {
-                            // ALIGNS WITH YOUR EXACT REGISTRATION KEY STRUCTURE: username_lower
                             const defaultUser = user.displayName || user.email.split('@')[0];
                             await setDoc(currentActiveUserRef, {
                                 username: defaultUser,
                                 username_lower: defaultUser.toLowerCase(),
                                 email: user.email,
+                                grade: "Prep 2",
+                                class: "2/A",
                                 role: "student", 
                                 warnings: 0,
                                 isRestricted: false,
@@ -253,12 +383,12 @@
                     }
                     
                     const userData = snapshot.data();
+                    cachedUserData = userData; // Store cache cleanly for modal rendering engines
 
                     if (userData.isRestricted === true) {
                         showLockoutScreen();
                         document.getElementById('app-loading').style.display = 'none';
-                        if (selfProfileListenerCancel) selfProfileListenerCancel();
-                        if (teacherMatrixListenerCancel) teacherMatrixListenerCancel();
+                        shutdownAllListenerStreams();
                         return;
                     }
 
@@ -279,15 +409,22 @@
                             banner.style.display = "none";
                         }
                         document.getElementById('teacher-upgrade-anchor').style.display = "inline-flex";
+                        document.getElementById('teacher-zone').style.display = "none";
+                        document.getElementById('student-hub-zone').style.display = "block";
+                        
+                        // Execute Classroom Hub Sync
+                        listenToClassroomHubLive(userData.grade, userData.class, user.uid);
                     }
 
                     if (userRole === "teacher") {
                         document.getElementById('teacher-zone').style.display = "block";
+                        document.getElementById('student-hub-zone').style.display = "none";
                         badge.style.backgroundColor = "var(--accent-green)";
                         document.getElementById('teacher-upgrade-anchor').style.display = "none";
-                        if (!teacherMatrixListenerCancel) {
-                            listenToStudentProfilesLive();
-                        }
+                        
+                        // Fire Teacher Matrix System Listener Stream
+                        const currentSelectionFilter = document.getElementById('teacher-matrix-filter-node').value;
+                        listenToStudentProfilesLive(currentSelectionFilter);
                     }
 
                     document.getElementById('app-loading').style.display = 'none';
@@ -300,15 +437,78 @@
             }
         });
 
-        function listenToStudentProfilesLive() {
+        // FEATURE 1: CLASSROOM HUB SYSTEM REALTIME DATA STREAM (STUDENTS)
+        function listenToClassroomHubLive(grade, studentClass, selfUid) {
+            if (studentPeerHubListenerCancel) studentPeerHubListenerCancel();
+            
+            const peersContainer = document.getElementById('peers-container');
+            document.getElementById('hub-title-node').innerText = `🏫 Classroom Peer Hub: Section ${studentClass} (${grade})`;
+
+            const q = query(
+                collection(db, "users"), 
+                where("role", "==", "student"),
+                where("grade", "==", grade),
+                where("class", "==", studentClass)
+            );
+
+            studentPeerHubListenerCancel = onSnapshot(q, (snapshot) => {
+                peersContainer.innerHTML = "";
+                let renderedPeerCount = 0;
+
+                snapshot.forEach((doc) => {
+                    if (doc.id === selfUid) return; // Skip listing oneself within companion index
+                    renderedPeerCount++;
+
+                    const data = doc.data();
+                    const pName = data.username || "Companion Node";
+                    const pEmail = data.email || "Hidden Security Domain";
+                    const isOnline = data.isOnline === true;
+
+                    const presenceClass = isOnline ? 'status-online' : 'status-offline';
+                    const presenceText = isOnline ? 'Online' : 'Offline';
+
+                    const row = document.createElement('div');
+                    row.className = 'student-row';
+                    row.style.padding = '14px 20px';
+                    row.innerHTML = `
+                        <div class="student-name">
+                            👤 @${pName}
+                            <span class="status-pill ${presenceClass}"><span class="status-dot"></span>${presenceText}</span>
+                        </div>
+                        <div style="font-size: 13px; color: var(--text-muted); font-family: monospace;">${pEmail}</div>
+                    `;
+                    peersContainer.appendChild(row);
+                });
+
+                if (renderedPeerCount === 0) {
+                    peersContainer.innerHTML = `<p style="color: var(--text-muted); font-style: italic; font-size: 14px;">No other peers found matching your section cluster index parameters yet.</p>`;
+                }
+            }, (error) => {
+                console.error("Peer cluster processing loop dropped:", error);
+            });
+        }
+
+        // Live Teacher Matrix Filter Trigger Handler Wire
+        document.getElementById('teacher-matrix-filter-node').addEventListener('change', (e) => {
+            listenToStudentProfilesLive(e.target.value);
+        });
+
+        // TEACHER SYSTEM ADMINISTRATIVE LISTENER ENGINE
+        function listenToStudentProfilesLive(classFilter = "All") {
+            if (teacherMatrixListenerCancel) teacherMatrixListenerCancel();
+            
             const container = document.getElementById('students-container');
-            const q = query(collection(db, "users"), where("role", "==", "student"));
+            let q = query(collection(db, "users"), where("role", "==", "student"));
+            
+            if (classFilter !== "All") {
+                q = query(collection(db, "users"), where("role", "==", "student"), where("class", "==", classFilter));
+            }
 
             teacherMatrixListenerCancel = onSnapshot(q, (querySnapshot) => {
                 container.innerHTML = "";
 
                 if (querySnapshot.empty) {
-                    container.innerHTML = "<p style='color: var(--text-muted);'>No registered student accounts found in database directory.</p>";
+                    container.innerHTML = "<p style='color: var(--text-muted); font-style: italic;'>No student logs register under this localized filter query path parameters.</p>";
                     return;
                 }
 
@@ -318,6 +518,8 @@
                     const sName = data.username || "Unnamed Profile";
                     const sEmail = data.email || "No Email Bound";
                     const sWarnings = data.warnings || 0;
+                    const sGrade = data.grade || "Prep 2";
+                    const sClass = data.class || "Unassigned";
                     
                     const isRestricted = data.isRestricted === true;
                     const sStatusText = isRestricted ? "RESTRICTED" : "ACTIVE";
@@ -336,7 +538,7 @@
                         <div class="student-name">
                             <div>
                                 👤 @${sName} <span class="status-pill ${presenceClass}"><span class="status-dot"></span>${presenceText}</span>
-                                <div class="student-email">${sEmail}</div>
+                                <div class="student-email">${sEmail} | Track Scope: <strong>${sGrade} [${sClass}]</strong></div>
                                 <div class="student-stats">Warnings logged: <strong>${sWarnings}</strong> | Security Status: <strong style="color: ${isRestricted ? 'var(--accent-red)' : 'var(--accent-green)'}">${sStatusText}</strong></div>
                             </div>
                         </div>
@@ -352,7 +554,93 @@
             });
         }
 
-        // CUSTOM MODAL ENGINE
+        // FEATURE 2: ACCOUNT SETTINGS MANAGEMENT MODAL APPLICATION LOGIC (EVERYONE)
+        function openSystemSettingsModal() {
+            if (!cachedUserData) return;
+
+            const modal = document.getElementById('settings-modal');
+            const usernameInput = document.getElementById('settings-username-input');
+            const studentFieldsBlock = document.getElementById('settings-student-fields');
+            const teacherFieldsBlock = document.getElementById('settings-teacher-fields');
+            const errorBanner = document.getElementById('settings-error-banner');
+
+            errorBanner.innerText = "";
+            errorBanner.style.display = "none";
+            usernameInput.value = cachedUserData.username || "";
+
+            if (cachedUserData.role === "teacher") {
+                studentFieldsBlock.style.display = "none";
+                teacherFieldsBlock.style.display = "block";
+                
+                // Read current drop UI value alignment selection configurations
+                const currentMatrixValue = document.getElementById('teacher-matrix-filter-node').value;
+                document.getElementById('settings-faculty-default-scope').value = currentMatrixValue;
+            } else {
+                teacherFieldsBlock.style.display = "none";
+                studentFieldsBlock.style.display = "block";
+                document.getElementById('settings-grade-view').value = cachedUserData.grade || "Prep 2";
+                document.getElementById('settings-class-view').value = cachedUserData.class || "2/A";
+            }
+
+            modal.classList.add('active');
+
+            // Wire commit operation
+            document.getElementById('settings-save-btn').onclick = async () => {
+                const updatedUsername = usernameInput.value.trim();
+                if (!updatedUsername) {
+                    errorBanner.innerText = "Error: Username mapping sequence parameters cannot remain blank.";
+                    errorBanner.style.display = "block";
+                    return;
+                }
+
+                try {
+                    const cleanLowerName = updatedUsername.toLowerCase();
+                    
+                    // Run verification algorithm for unique custom profile username mapping namespaces
+                    if (cleanLowerName !== cachedUserData.username_lower) {
+                        const checkQuery = query(collection(db, "users"), where("username_lower", "==", cleanLowerName));
+                        const checkSnap = await getDocs(checkQuery);
+                        
+                        let nameConflictDetected = false;
+                        checkSnap.forEach((doc) => {
+                            if (doc.id !== auth.currentUser.uid) nameConflictDetected = true;
+                        });
+
+                        if (nameConflictDetected) {
+                            errorBanner.innerText = "Error: That identity handle registry index is already locked by another account.";
+                            errorBanner.style.display = "block";
+                            return;
+                        }
+                    }
+
+                    const updatesMap = {
+                        username: updatedUsername,
+                        username_lower: cleanLowerName
+                    };
+
+                    // Process Faculty selection rules parameters payload bindings
+                    if (cachedUserData.role === "teacher") {
+                        const filterSelectorNode = document.getElementById('settings-faculty-default-scope');
+                        document.getElementById('teacher-matrix-filter-node').value = filterSelectorNode.value;
+                        // Execute internal hot refresh sequence rebind tracking array
+                        listenToStudentProfilesLive(filterSelectorNode.value);
+                    }
+
+                    await updateDoc(currentActiveUserRef, updatesMap);
+                    modal.classList.remove('active');
+
+                } catch(err) {
+                    errorBanner.innerText = `Write Fault Protocol Error: ${err.message}`;
+                    errorBanner.style.display = "block";
+                }
+            };
+
+            document.getElementById('settings-close-btn').onclick = () => {
+                modal.classList.remove('active');
+            };
+        }
+
+        // BASE CONFIRMATION DIALOG CORE PORTAL WINDOWS
         function triggerPortalModal({ title, message, icon, confirmText, isDanger, showForm, showCancel, onConfirm }) {
             const overlay = document.getElementById('portal-modal');
             document.getElementById('modal-title').innerText = title;
@@ -394,7 +682,7 @@
             banner.style.display = "block";
         }
 
-        // TEACHER UPGRADE LOOKUP SYSTEM
+        // TEACHER UPGRADE LOOKUP REGISTRY SYSTEM WIZARD HOOKS
         window.openTeacherVerificationWizard = function() {
             document.getElementById('form-teacher-user').value = "";
             document.getElementById('form-teacher-code').value = "";
@@ -416,7 +704,6 @@
                     }
 
                     try {
-                        // 1. Verify code validity
                         const codeVerificationRef = doc(db, "teacher_codes", enteredCode);
                         const codeSnapshot = await getDoc(codeVerificationRef);
 
@@ -425,7 +712,6 @@
                             return;
                         }
 
-                        // 2. CASE-INSENSITIVE CHECK SEARCH USING YOUR KEY: username_lower
                         const targetLowercaseName = chosenUsername.toLowerCase();
                         const checkQuery = query(collection(db, "users"), where("username_lower", "==", targetLowercaseName));
                         const duplicateCheckSnap = await getDocs(checkQuery);
@@ -442,10 +728,9 @@
                             return;
                         }
 
-                        // 3. CLEAN WRITES RESPECTING EXACT KEY STRUCTURE
                         await updateDoc(currentActiveUserRef, {
                             username: chosenUsername,
-                            username_lower: targetLowercaseName, // Keeps your native username_lower clean and perfectly synchronized
+                            username_lower: targetLowercaseName, 
                             role: "teacher"
                         });
                         
@@ -537,9 +822,14 @@
             `;
         }
 
-        async function runGracefulSignOut() {
+        function shutdownAllListenerStreams() {
             if (selfProfileListenerCancel) selfProfileListenerCancel();
             if (teacherMatrixListenerCancel) teacherMatrixListenerCancel();
+            if (studentPeerHubListenerCancel) studentPeerHubListenerCancel();
+        }
+
+        async function runGracefulSignOut() {
+            shutdownAllListenerStreams();
             if (currentActiveUserRef) {
                 try { await updateDoc(currentActiveUserRef, { isOnline: false }); } catch (e) {}
             }
@@ -548,7 +838,12 @@
 
         window.triggerLogoutLive = runGracefulSignOut;
         document.getElementById('logout-btn').addEventListener('click', runGracefulSignOut);
-        window.addEventListener('beforeunload', () => { if (currentActiveUserRef) { updateDoc(currentActiveUserRef, { isOnline: false }); } });
+        
+        window.addEventListener('beforeunload', () => { 
+            if (currentActiveUserRef) { 
+                updateDoc(currentActiveUserRef, { isOnline: false }); 
+            } 
+        });
     </script>
 </body>
 </html>

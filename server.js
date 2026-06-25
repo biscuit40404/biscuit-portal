@@ -1,6 +1,9 @@
 const express = require('express');
+const { GoogleGenAI } = require('@google/genai');
 const path = require('path');
 const app = express();
+app.use(express.json());
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 const PORT = process.env.PORT || 3000;
 
 // Serve static files (CSS, images, client JS) from the public folder

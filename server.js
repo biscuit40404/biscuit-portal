@@ -22,4 +22,19 @@ app.get('/dashboard', (req, res) => {
 
 app.listen(PORT, () => {
     console.log(`Server running smoothly on port ${PORT}`);
+
+    // GEMINI AI CHAT ENDPOINT
+app.post('/api/chat', async (req, res) => {
+    try {
+        const { userPrompt } = req.body;
+        const response = await ai.models.generateContent({
+            model: 'gemini-3.5-flash',
+            contents: userPrompt,
+        });
+        res.json({ reply: response.text });
+    } catch (error) {
+        console.error("AI Error:", error);
+        res.status(500).json({ error: "The AI brain dropped a biscuit." });
+    }
+});
 });

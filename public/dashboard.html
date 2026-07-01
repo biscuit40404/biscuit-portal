@@ -18,26 +18,54 @@
             --border-color: #e2e8f0;
         }
 
+        * { box-sizing: border-box; }
         body { font-family: 'Inter', system-ui, sans-serif; background-color: var(--bg-main); margin: 0; padding: 0; }
         .app-container { display: flex; min-height: 100vh; }
         
-        .sidebar { width: 260px; background-color: var(--sidebar-bg); color: #ffffff; display: flex; flex-direction: column; padding: 24px; box-sizing: border-box; }
-        .sidebar-brand { font-size: 20px; font-weight: 800; margin-bottom: 40px; }
+        .sidebar { width: 260px; background-color: var(--sidebar-bg); color: #ffffff; display: flex; flex-direction: column; padding: 24px; box-sizing: border-box; transition: all 0.3s ease; position: relative; overflow-y: auto; }
+        .sidebar.collapsed { width: 80px; padding: 24px 12px; }
+        .sidebar.collapsed .sidebar-text { display: none; }
+        .sidebar.collapsed .nav-links { gap: 4px; }
+        .sidebar.collapsed .nav-item { padding: 12px 8px; justify-content: center; }
+        .sidebar.collapsed .version-sidebar-stamp { display: none; }
+        .sidebar.collapsed .teacher-upgrade-link { display: none; }
+        .sidebar.collapsed .btn-logout { padding: 8px; font-size: 11px; }
+
+        .sidebar-brand { font-size: 20px; font-weight: 800; margin-bottom: 40px; display: flex; align-items: center; justify-content: space-between; }
+        .sidebar-brand .brand-text { white-space: nowrap; }
+        .sidebar.collapsed .sidebar-brand .brand-text { display: none; }
+        .sidebar-toggle-btn { background: none; border: none; color: #ffffff; cursor: pointer; font-size: 18px; padding: 4px; display: flex; align-items: center; }
+        .sidebar-toggle-btn:hover { opacity: 0.8; }
+
         .nav-links { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
-        .nav-item { padding: 12px 16px; border-radius: 8px; cursor: pointer; font-weight: 500; color: #94a3b8; transition: all 0.2s; }
+        .nav-item { padding: 12px 16px; border-radius: 8px; cursor: pointer; font-weight: 500; color: #94a3b8; transition: all 0.2s; display: flex; align-items: center; gap: 8px; }
         .nav-item:hover { background-color: #243249; color: #ffffff; }
         .nav-item.active { background-color: #334155; color: #ffffff; }
+        .nav-item-icon { min-width: 20px; }
 
-        .main-content { flex: 1; padding: 40px; box-sizing: border-box; overflow-y: auto; }
+        .main-content { flex: 1; padding: 40px; box-sizing: border-box; overflow-y: auto; transition: all 0.3s ease; }
         .top-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; border-bottom: 1px solid var(--border-color); padding-bottom: 20px; }
         .top-header h1 { margin: 0; color: #0f172a; font-size: 28px; }
 
-        .user-profile-card { background: var(--card-bg); border: 1px solid var(--border-color); padding: 16px 24px; border-radius: 12px; display: flex; align-items: center; gap: 16px; }
-        .avatar-placeholder { width: 40px; height: 40px; background-color: #e2e8f0; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: bold; }
+        .user-profile-card { background: var(--card-bg); border: 1px solid var(--border-color); padding: 16px 24px; border-radius: 12px; display: flex; align-items: center; gap: 16px; cursor: pointer; position: relative; }
+        .user-profile-card:hover { background-color: #f8fafc; }
+        .avatar-placeholder { width: 40px; height: 40px; background-color: #e2e8f0; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 18px; overflow: hidden; }
+        .avatar-placeholder img { width: 100%; height: 100%; object-fit: cover; }
         .user-details { display: flex; flex-direction: column; }
-        #user-display { font-size: 14px; font-weight: 600; color: #0f172a; }
+        #user-display { font-size: 14px; font-weight: 600; color: #0f172a; cursor: pointer; }
+        #user-display:hover { color: var(--accent-blue); }
         .badge { align-self: flex-start; margin-top: 4px; background: var(--accent-blue); color: white; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
 
+        /* DROPDOWN MENU */
+        .user-dropdown { position: absolute; top: 100%; right: 0; background: white; border: 1px solid var(--border-color); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); min-width: 200px; display: none; z-index: 100; margin-top: 8px; }
+        .user-dropdown.active { display: block; }
+        .dropdown-item { padding: 12px 16px; color: var(--text-main); cursor: pointer; border-bottom: 1px solid var(--border-color); transition: background 0.2s; font-size: 14px; }
+        .dropdown-item:last-child { border-bottom: none; }
+        .dropdown-item:hover { background-color: #f8fafc; color: var(--accent-blue); }
+        .dropdown-item.danger { color: var(--accent-red); }
+        .dropdown-item.danger:hover { background-color: #fef2f2; }
+
+        /* Portal Sections */
         .portal-section { display: none; }
         .portal-section.active-view { display: block; }
 
@@ -55,12 +83,12 @@
         #teacher-zone h2 { margin-top: 0; color: #0f172a; font-size: 22px; margin-bottom: 20px; }
         
         .matrix-header-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
-        .matrix-filter-select { padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 14px; color: var(--text-main); font-weight: 600; outline: none; background: white; }
+        .matrix-filter-select { padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 14px; color: var(--text-main); font-weight: 600; outline: none; background: white; cursor: pointer; }
 
         .student-list { display: flex; flex-direction: column; gap: 12px; margin-top: 15px; }
-        .student-row { display: flex; justify-content: space-between; align-items: center; padding: 16px; background: #f8fafc; border: 1px solid var(--border-color); border-radius: 10px; }
+        .student-row { display: flex; justify-content: space-between; align-items: center; padding: 16px; background: #f8fafc; border: 1px solid var(--border-color); border-radius: 10px; cursor: pointer; transition: all 0.2s; }
+        .student-row:hover { background-color: #e2e8f0; transform: translateX(4px); }
         .student-name { font-weight: 600; color: #1e293b; display: flex; align-items: center; gap: 8px; }
-        .student-email { font-size: 12px; color: var(--text-muted); font-weight: normal; }
         .student-stats { font-size: 11px; color: var(--text-muted); margin-top: 2px; font-family: monospace; display: flex; gap: 12px; align-items: center; }
         
         .status-pill { display: inline-flex; align-items: center; gap: 6px; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; }
@@ -84,12 +112,13 @@
         .teacher-upgrade-link { font-size: 12px; color: #64748b; text-decoration: none; font-weight: 600; margin-bottom: 16px; cursor: pointer; transition: color 0.2s; display: inline-flex; }
         .teacher-upgrade-link:hover { color: var(--accent-green); }
 
-        .btn-logout { background-color: transparent; color: #ef4444; border: 1px solid #fee2e2; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; text-align: left; }
+        .btn-logout { background-color: transparent; color: #ef4444; border: 1px solid #fee2e2; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; text-align: left; transition: all 0.2s; }
         .btn-logout:hover { background-color: #fef2f2; }
 
+        /* Modals */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); display: flex; justify-content: center; align-items: center; visibility: hidden; opacity: 0; transition: all 0.3s; z-index: 1000; }
         .modal-overlay.active { visibility: visible; opacity: 1; }
-        .modal-box { background: white; padding: 28px; border-radius: 16px; max-width: 400px; width: 90%; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); border: 1px solid var(--border-color); transform: scale(0.9); transition: transform 0.3s; }
+        .modal-box { background: white; padding: 28px; border-radius: 16px; max-width: 500px; width: 90%; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); border: 1px solid var(--border-color); transform: scale(0.9); transition: transform 0.3s; max-height: 90vh; overflow-y: auto; }
         .modal-overlay.active .modal-box { transform: scale(1); }
         .modal-icon { font-size: 44px; margin-bottom: 12px; }
         .modal-title { font-size: 20px; font-weight: 700; color: #0f172a; margin-bottom: 8px; }
@@ -99,6 +128,7 @@
         .modal-custom-form label { font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; }
         .modal-field { padding: 10px 14px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 14px; outline: none; transition: border 0.2s; margin-bottom: 8px; width: 100%; box-sizing: border-box; }
         .modal-field:focus { border-color: var(--accent-blue); }
+        .modal-field[type="file"] { padding: 6px; }
 
         .modal-error-display { color: var(--accent-red); font-size: 13px; font-weight: 600; text-align: center; margin-bottom: 16px; background: #fef2f2; border: 1px solid #fee2e2; padding: 8px 12px; border-radius: 6px; display: none; }
 
@@ -108,24 +138,60 @@
         .btn-modal-confirm.danger { background: var(--accent-red); }
         .btn-modal-cancel { background: #e2e8f0; color: var(--text-main); }
 
+        .profile-modal-content { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+        .profile-avatar-large { width: 100px; height: 100px; border-radius: 50%; background-color: #e2e8f0; display: flex; justify-content: center; align-items: center; font-size: 40px; border: 3px solid var(--accent-blue); overflow: hidden; }
+        .profile-avatar-large img { width: 100%; height: 100%; object-fit: cover; }
+        .profile-info { text-align: center; }
+        .profile-info h2 { margin: 0; color: #0f172a; font-size: 20px; }
+        .profile-info p { margin: 4px 0; color: var(--text-muted); font-size: 14px; }
+        .profile-about { background: #f8fafc; padding: 12px; border-radius: 8px; font-size: 13px; color: var(--text-main); line-height: 1.5; max-width: 300px; }
+
         .lockout-screen { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #0f172a; color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; }
         .lockout-card { background: #1e293b; padding: 40px; border-radius: 16px; border: 1px solid #334155; max-width: 450px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
         .lockout-icon { font-size: 64px; margin-bottom: 16px; }
         .btn-lockout-logout { background: var(--accent-red); color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 20px; font-size: 16px; }
+
+        @media (max-width: 768px) {
+            .sidebar { position: fixed; left: 0; top: 0; height: 100vh; z-index: 99; }
+            .sidebar.collapsed { width: 0; padding: 0; overflow: hidden; }
+            .main-content { margin-left: 0; }
+        }
     </style>
 </head>
 <body>
 
     <div id="app-loading" style="position: fixed; top:0; left:0; width:100vw; height:100vh; background:#f8fafc; display:flex; flex-direction:column; justify-content:center; align-items:center; z-index:2000;">
         <div style="font-size: 24px; font-weight: 800; color: #0f172a; margin-bottom: 10px;">🍪 Biscuit Portal</div>
-        <div id="loading-status" style="color: #64748b; font-size: 14px; font-weight: 500; background: #e2e8f0; padding: 6px 16px; border-radius: 20px;">Initializing security engine nodes...</div>
+        <div id="loading-status" style="color: #64748b; font-size: 14px; font-weight: 500; background: #e2e8f0; padding: 6px 16px; border-radius: 20px;">Initializing...</div>
     </div>
 
+    <!-- Profile View Modal -->
+    <div id="profile-view-modal" class="modal-overlay">
+        <div class="modal-box">
+            <div class="profile-modal-content">
+                <div class="profile-avatar-large" id="profile-view-avatar">🎓</div>
+                <div class="profile-info">
+                    <h2 id="profile-view-name">Username</h2>
+                    <p id="profile-view-class">Class 2/A</p>
+                    <p id="profile-view-role">Student</p>
+                </div>
+                <div class="profile-about" id="profile-view-about-container" style="display: none;">
+                    <strong>About:</strong><br>
+                    <span id="profile-view-about"></span>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-modal btn-modal-cancel" onclick="closeProfileModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Teacher Verification Modal -->
     <div id="portal-modal" class="modal-overlay">
         <div class="modal-box">
             <div id="modal-icon" class="modal-icon">ℹ️</div>
             <div id="modal-title" class="modal-title">System Status</div>
-            <div id="modal-message" class="modal-msg">Loading request nodes...</div>
+            <div id="modal-message" class="modal-msg">Loading...</div>
             
             <div id="modal-custom-form" class="modal-custom-form" style="display: none;">
                 <label>Choose Teacher Username</label>
@@ -143,51 +209,92 @@
         </div>
     </div>
 
-    <div id="settings-modal" class="modal-overlay">
-        <div class="modal-box" style="text-align: left;">
-            <div class="modal-title" style="text-align: center; margin-bottom: 16px;">⚙️ Workspace Settings</div>
+    <!-- Profile Panel Modal -->
+    <div id="profile-modal" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-title" style="text-align: center; margin-bottom: 16px;">👤 My Profile</div>
             <div class="modal-custom-form">
-                <label>Global Portal Username</label>
-                <input type="text" id="settings-username-input" class="modal-field" placeholder="Updating configuration identity...">
+                <label>Username</label>
+                <input type="text" id="profile-username-input" class="modal-field" placeholder="Your username...">
+                
+                <label>About Me</label>
+                <textarea id="profile-about-input" class="modal-field" placeholder="Tell others about yourself..." style="min-height: 80px; font-family: inherit; resize: vertical;"></textarea>
+                
+                <label>Profile Picture</label>
+                <input type="file" id="profile-pic-input" class="modal-field" accept="image/*">
+                <small style="color: var(--text-muted);">Max 2MB, JPG/PNG only</small>
+            </div>
+            <div id="profile-error-banner" class="modal-error-display"></div>
+            <div class="modal-actions" style="margin-top: 20px;">
+                <button class="btn-modal btn-modal-cancel" onclick="closeProfilePanel()">Cancel</button>
+                <button id="profile-save-btn" class="btn-modal btn-modal-confirm">Save Profile</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-title" style="text-align: center; margin-bottom: 16px;">⚙️ Settings</div>
+            <div class="modal-custom-form">
+                <label>Email Address (Private)</label>
+                <input type="email" id="settings-email-display" class="modal-field" disabled style="background: #f1f5f9; color: #64748b; cursor: not-allowed;">
+                
+                <label>Account Created</label>
+                <input type="text" id="settings-created-display" class="modal-field" disabled style="background: #f1f5f9; color: #64748b; cursor: not-allowed;">
                 
                 <div id="settings-student-fields" style="display: none;">
-                    <label>Registered Base Grade</label>
+                    <label>Grade</label>
                     <input type="text" id="settings-grade-view" class="modal-field" disabled style="background: #f1f5f9; color: #64748b; cursor: not-allowed;">
-                    <label>Assigned Section Node</label>
+                    <label>Class</label>
                     <input type="text" id="settings-class-view" class="modal-field" disabled style="background: #f1f5f9; color: #64748b; cursor: not-allowed;">
                 </div>
                 
                 <div id="settings-teacher-fields" style="display: none;">
-                    <label style="color: var(--accent-green);">Faculty Matrix Cluster Scope</label>
-                    <p style="font-size: 12px; color: var(--text-muted); margin: 2px 0 8px 0;">Select your priority tracking stream filter default assignment value.</p>
+                    <label style="color: var(--accent-green);">Default Student Filter</label>
                     <select id="settings-faculty-default-scope" class="modal-field" style="width:100%; cursor: pointer;">
-                        <option value="All">All Realtime Clusters Combined</option>
-                        <option value="2/A">Prep 2 - Section 2/A Matrix</option>
-                        <option value="2/B">Prep 2 - Section 2/B Matrix</option>
-                        <option value="2/C">Prep 2 - Section 2/C Matrix</option>
-                        <option value="2/D">Prep 2 - Section 2/D Matrix</option>
+                        <option value="All">All Students</option>
+                        <option value="2/A">Class 2/A</option>
+                        <option value="2/B">Class 2/B</option>
+                        <option value="2/C">Class 2/C</option>
+                        <option value="2/D">Class 2/D</option>
                     </select>
                 </div>
             </div>
             <div id="settings-error-banner" class="modal-error-display"></div>
             <div class="modal-actions" style="margin-top: 20px;">
-                <button id="settings-close-btn" class="btn-modal btn-modal-cancel">Dismiss</button>
-                <button id="settings-save-btn" class="btn-modal btn-modal-confirm">Commit Configuration</button>
+                <button class="btn-modal btn-modal-cancel" onclick="closeSettingsPanel()">Close</button>
+                <button id="settings-save-btn" class="btn-modal btn-modal-confirm">Save Changes</button>
             </div>
         </div>
     </div>
 
     <div class="app-container">
-        <nav class="sidebar">
-            <div class="sidebar-brand">🍪 Biscuit Portal</div>
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-brand">
+                <span class="brand-text">🍪 Portal</span>
+                <button class="sidebar-toggle-btn" onclick="toggleSidebar()">☰</button>
+            </div>
             <ul class="nav-links">
-                <li class="nav-item active" id="nav-link-overview">🏠 Overview</li>
-                <li class="nav-item" id="nav-link-classes">📚 My Classes / Hub</li>
-                <li class="nav-item" id="nav-link-announcements">📢 Announcements</li>
-                <li class="nav-item" id="nav-link-settings" style="margin-top: 4px; border-top: 1px solid #334155; padding-top: 16px;">⚙️ Settings Panel</li>
+                <li class="nav-item active" id="nav-link-overview" onclick="navigateTo('overview')">
+                    <span class="nav-item-icon">🏠</span>
+                    <span class="sidebar-text">Overview</span>
+                </li>
+                <li class="nav-item" id="nav-link-classes" onclick="navigateTo('classes')">
+                    <span class="nav-item-icon">📚</span>
+                    <span class="sidebar-text">My Classes</span>
+                </li>
+                <li class="nav-item" id="nav-link-announcements" onclick="navigateTo('announcements')">
+                    <span class="nav-item-icon">📢</span>
+                    <span class="sidebar-text">Announcements</span>
+                </li>
+                <li class="nav-item" id="nav-link-settings" style="margin-top: 4px; border-top: 1px solid #334155; padding-top: 16px;" onclick="navigateTo('settings')">
+                    <span class="nav-item-icon">⚙️</span>
+                    <span class="sidebar-text">Settings</span>
+                </li>
             </ul>
             
-            <div class="version-sidebar-stamp" id="dashboard-version-node">Loading...</div>
+            <div class="version-sidebar-stamp" id="dashboard-version-node">v1.3.0</div>
             
             <div id="teacher-upgrade-anchor" class="teacher-upgrade-link" onclick="openTeacherVerificationWizard()">🛠️ I'm a Teacher</div>
             
@@ -198,70 +305,78 @@
             <header class="top-header">
                 <div>
                     <h1 id="dynamic-view-title">Welcome Back</h1>
-                    <p style="color: var(--text-muted); margin: 4px 0 0 0; font-size: 14px;" id="dynamic-view-desc">Campus core security parameters active.</p>
+                    <p style="color: var(--text-muted); margin: 4px 0 0 0; font-size: 14px;" id="dynamic-view-desc">Portal ready.</p>
                 </div>
                 
-                <div class="user-profile-card">
-                    <div class="avatar-placeholder">🎓</div>
-                    <div class="user-details">
-                        <span id="user-display">Verifying Session...</span>
-                        <span id="role-badge" class="badge" style="display: none;">student</span>
+                <div style="position: relative;">
+                    <div class="user-profile-card" id="user-profile-card" onclick="toggleUserDropdown(event)">
+                        <div class="avatar-placeholder" id="top-avatar">🎓</div>
+                        <div class="user-details">
+                            <span id="user-display">Verifying...</span>
+                            <span id="role-badge" class="badge" style="display: none;">student</span>
+                        </div>
+                    </div>
+                    
+                    <div class="user-dropdown" id="user-dropdown">
+                        <div class="dropdown-item" onclick="openProfilePanel()">👤 My Profile</div>
+                        <div class="dropdown-item" onclick="openSettingsPanel()">⚙️ Settings</div>
+                        <div class="dropdown-item danger" onclick="triggerLogoutLive()">🚪 Logout</div>
                     </div>
                 </div>
             </header>
 
-            <div id="warning-banner">⚠️ ATTENTION: Formal disciplinary warnings loaded.</div>
+            <div id="warning-banner">⚠️ ATTENTION: You have received warnings.</div>
 
             <div id="section-overview" class="portal-section active-view">
                 <div class="dashboard-grid">
                     <div class="card">
                         <h3>📢 Campus Broadcast</h3>
-                        <p>Welcome to your personal interface folder view. Your updates load safely directly from active backend clusters.</p>
+                        <p>Welcome to your personal dashboard. Your updates load safely from active servers.</p>
                     </div>
                     <div class="card">
-                        <h3>🔒 Account Credentials</h3>
-                        <p>Your session profile properties match validation nodes securely. Cross-site scripting checks verified.</p>
+                        <h3>🔒 Privacy First</h3>
+                        <p>Your email is private and never shared. Your profile shows only what you choose.</p>
                     </div>
                 </div>
 
                 <div id="student-hub-zone">
-                    <h2 id="hub-title-node">🏫 Classroom Peer Sync Vector</h2>
-                    <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px;">Real-time communication connection array for your current workspace section track configuration.</p>
+                    <h2 id="hub-title-node">🏫 Your Class Peers</h2>
+                    <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px;">Click on any peer to see their public profile.</p>
                     <div class="student-list" id="peers-container">
-                        <p style="color: var(--text-muted); font-style: italic;">Binding real-time peer connection hooks...</p>
+                        <p style="color: var(--text-muted); font-style: italic;">Loading peers...</p>
                     </div>
                 </div>
 
                 <div id="teacher-zone">
                     <div class="matrix-header-controls">
-                        <h2>🛠️ Student Management Matrix</h2>
+                        <h2>🛠️ Student Directory</h2>
                         <select id="teacher-matrix-filter-node" class="matrix-filter-select">
-                            <option value="All">View All Students Globally</option>
-                            <option value="2/A">Filter: Class 2/A</option>
-                            <option value="2/B">Filter: Class 2/B</option>
-                            <option value="2/C">Filter: Class 2/C</option>
-                            <option value="2/D">Filter: Class 2/D</option>
+                            <option value="All">All Students</option>
+                            <option value="2/A">Class 2/A</option>
+                            <option value="2/B">Class 2/B</option>
+                            <option value="2/C">Class 2/C</option>
+                            <option value="2/D">Class 2/D</option>
                         </select>
                     </div>
-                    <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px;">Live student directory cluster synchronized. System actions deploy across nodes instantaneously.</p>
+                    <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px;">Manage students with administrative controls.</p>
                     
                     <div class="student-list" id="students-container">
-                        <p id="loading-students" style="color: var(--text-muted); font-style: italic;">Opening real-time database listener stream...</p>
+                        <p style="color: var(--text-muted); font-style: italic;">Loading students...</p>
                     </div>
                 </div>
             </div>
 
             <div id="section-classes" class="portal-section">
                 <div class="card">
-                    <h3>📚 Academic Roster Management</h3>
-                    <p style="margin-bottom: 0;">Your active grade cluster track registers under standard campus metrics. Switch back to Overview to observe live companion sync coordinates.</p>
+                    <h3>📚 Class Management</h3>
+                    <p>Access your class information and materials here.</p>
                 </div>
             </div>
 
             <div id="section-announcements" class="portal-section">
                 <div class="card">
-                    <h3>📢 Priority Notice Infrastructure</h3>
-                    <p style="margin-bottom: 0;">No severe backend broadcast interruptions flagged on server infrastructure pipelines today.</p>
+                    <h3>📢 Announcements</h3>
+                    <p>Important updates will appear here.</p>
                 </div>
             </div>
 
@@ -272,10 +387,10 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
         import { getFirestore, doc, collection, query, where, onSnapshot, updateDoc, increment, setDoc, getDoc, getDocs } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-storage.js";
 
-        const APP_VERSION = "v1.2.0";
-        document.getElementById('dashboard-version-node').innerText = `BUILD DEV_${APP_VERSION}`;
-
+        const APP_VERSION = "v1.3.0";
+        
         const firebaseConfig = {
             apiKey: "AIzaSyDHBQ20Oan5NYyVbyf-0PMrIBGSNJKLYNY",
             authDomain: "biscuit-portal-1547d.firebaseapp.com",
@@ -288,6 +403,7 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
+        const storage = getStorage(app);
 
         let currentActiveUserRef = null;
         let cachedUserData = null;
@@ -295,86 +411,134 @@
         let teacherMatrixListenerCancel = null;
         let studentPeerHubListenerCancel = null;
 
-        document.getElementById('loading-status').innerText = "Verifying security handshake credentials...";
+        // SIDEBAR TOGGLE
+        window.toggleSidebar = function() {
+            document.getElementById('sidebar').classList.toggle('collapsed');
+        };
 
-        const navLinkOverview = document.getElementById('nav-link-overview');
-        const navLinkClasses = document.getElementById('nav-link-classes');
-        const navLinkAnnouncements = document.getElementById('nav-link-announcements');
-        const navLinkSettings = document.getElementById('nav-link-settings');
+        // USER DROPDOWN
+        window.toggleUserDropdown = function(e) {
+            e.stopPropagation();
+            document.getElementById('user-dropdown').classList.toggle('active');
+        };
 
-        const sectionOverview = document.getElementById('section-overview');
-        const sectionClasses = document.getElementById('section-classes');
-        const sectionAnnouncements = document.getElementById('section-announcements');
-
-        const titleNode = document.getElementById('dynamic-view-title');
-        const descNode = document.getElementById('dynamic-view-desc');
-
-        function clearViewRoutingState() {
-            [navLinkOverview, navLinkClasses, navLinkAnnouncements, navLinkSettings].forEach(node => node.classList.remove('active'));
-            [sectionOverview, sectionClasses, sectionAnnouncements].forEach(node => node.classList.remove('active-view'));
-        }
-
-        navLinkOverview.addEventListener('click', () => {
-            clearViewRoutingState();
-            navLinkOverview.classList.add('active');
-            sectionOverview.classList.add('active-view');
-            titleNode.innerText = "Welcome Back";
-            descNode.innerText = "Campus core security parameters active.";
+        document.addEventListener('click', () => {
+            document.getElementById('user-dropdown').classList.remove('active');
         });
 
-        navLinkClasses.addEventListener('click', () => {
-            clearViewRoutingState();
-            navLinkClasses.classList.add('active');
-            sectionClasses.classList.add('active-view');
-            titleNode.innerText = "📚 Academic Node Directory";
-            descNode.innerText = "Observing verified registration credentials.";
-        });
+        // NAVIGATION
+        window.navigateTo = function(section) {
+            const sections = {
+                overview: ['section-overview', 'nav-link-overview', 'Welcome Back', 'Portal ready.'],
+                classes: ['section-classes', 'nav-link-classes', '📚 Classes', 'Manage your courses.'],
+                announcements: ['section-announcements', 'nav-link-announcements', '📢 Announcements', 'Stay informed.'],
+                settings: ['section-settings', 'nav-link-settings', 'Settings', 'Manage your account.']
+            };
 
-        navLinkAnnouncements.addEventListener('click', () => {
-            clearViewRoutingState();
-            navLinkAnnouncements.classList.add('active');
-            sectionAnnouncements.classList.add('active-view');
-            titleNode.innerText = "📢 Operational Alerts Hub";
-            descNode.innerText = "Live infrastructure monitoring systems active.";
-        });
+            if (!sections[section]) return;
 
-        navLinkSettings.addEventListener('click', () => {
-            openSystemSettingsModal();
-        });
+            document.querySelectorAll('.portal-section').forEach(s => s.classList.remove('active-view'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
 
-        // Auth Engine Observer Wire
+            document.getElementById(sections[section][0]).classList.add('active-view');
+            document.getElementById(sections[section][1]).classList.add('active');
+            document.getElementById('dynamic-view-title').innerText = sections[section][2];
+            document.getElementById('dynamic-view-desc').innerText = sections[section][3];
+        };
+
+        // PROFILE MODALS
+        window.openProfilePanel = function() {
+            document.getElementById('user-dropdown').classList.remove('active');
+            if (!cachedUserData) return;
+            document.getElementById('profile-username-input').value = cachedUserData.username || '';
+            document.getElementById('profile-about-input').value = cachedUserData.about || '';
+            document.getElementById('profile-modal').classList.add('active');
+        };
+
+        window.closeProfilePanel = function() {
+            document.getElementById('profile-modal').classList.remove('active');
+        };
+
+        window.openSettingsPanel = function() {
+            document.getElementById('user-dropdown').classList.remove('active');
+            if (!cachedUserData) return;
+            document.getElementById('settings-email-display').value = cachedUserData.email || '';
+            document.getElementById('settings-created-display').value = cachedUserData.createdAt ? new Date(cachedUserData.createdAt).toLocaleDateString() : 'Unknown';
+            
+            if (cachedUserData.role === 'teacher') {
+                document.getElementById('settings-student-fields').style.display = 'none';
+                document.getElementById('settings-teacher-fields').style.display = 'block';
+            } else {
+                document.getElementById('settings-student-fields').style.display = 'block';
+                document.getElementById('settings-teacher-fields').style.display = 'none';
+                document.getElementById('settings-grade-view').value = cachedUserData.grade || 'Prep 2';
+                document.getElementById('settings-class-view').value = cachedUserData.class || '2/A';
+            }
+            document.getElementById('settings-modal').classList.add('active');
+        };
+
+        window.closeSettingsPanel = function() {
+            document.getElementById('settings-modal').classList.remove('active');
+        };
+
+        window.closeProfileModal = function() {
+            document.getElementById('profile-view-modal').classList.remove('active');
+        };
+
+        window.viewPublicProfile = function(uid) {
+            if (uid === auth.currentUser.uid) return;
+            
+            getDoc(doc(db, 'users', uid)).then(snap => {
+                if (snap.exists()) {
+                    const data = snap.data();
+                    document.getElementById('profile-view-avatar').innerText = data.profilePic || '👤';
+                    document.getElementById('profile-view-name').innerText = `@${data.username || 'User'}`;
+                    document.getElementById('profile-view-class').innerText = `${data.grade} - Section ${data.class}`;
+                    document.getElementById('profile-view-role').innerText = data.role === 'teacher' ? 'Teacher' : 'Student';
+                    
+                    if (data.about) {
+                        document.getElementById('profile-view-about-container').style.display = 'block';
+                        document.getElementById('profile-view-about').innerText = data.about;
+                    } else {
+                        document.getElementById('profile-view-about-container').style.display = 'none';
+                    }
+                    document.getElementById('profile-view-modal').classList.add('active');
+                }
+            });
+        };
+
+        // AUTH & INITIALIZATION
         onAuthStateChanged(auth, async (user) => {
             if (user) {
-                document.getElementById('loading-status').innerText = "Mapping database path coordinates...";
-                currentActiveUserRef = doc(db, "users", user.uid);
+                currentActiveUserRef = doc(db, 'users', user.uid);
                 
                 try {
                     await updateDoc(currentActiveUserRef, { isOnline: true });
                 } catch(e) {
-                    console.warn("Pre-initial presence write bypassed.");
+                    console.warn('Pre-initial presence write bypassed.');
                 }
 
                 selfProfileListenerCancel = onSnapshot(currentActiveUserRef, async (snapshot) => {
-                    
                     if (!snapshot.exists()) {
-                        document.getElementById('loading-status').innerText = "Registering default dashboard credentials...";
                         try {
                             const defaultUser = user.displayName || user.email.split('@')[0];
                             await setDoc(currentActiveUserRef, {
                                 username: defaultUser,
                                 username_lower: defaultUser.toLowerCase(),
                                 email: user.email,
-                                grade: "Prep 2",
-                                class: "2/A",
-                                role: "student", 
+                                grade: 'Prep 2',
+                                class: '2/A',
+                                role: 'student',
                                 warnings: 0,
                                 isRestricted: false,
-                                isOnline: true
+                                isOnline: true,
+                                createdAt: new Date().toISOString(),
+                                about: ''
                             });
                         } catch(err) {
-                            document.getElementById('loading-status').innerText = `Database Registry Fault: ${err.message}`;
+                            console.error('Setup failed:', err);
                         }
-                        return; 
+                        return;
                     }
                     
                     const userData = snapshot.data();
@@ -387,97 +551,91 @@
                         return;
                     }
 
-                    const userRole = userData.role || "student";
-                    const usernameDisplay = userData.username || user.displayName || "User";
+                    const userRole = userData.role || 'student';
+                    const usernameDisplay = userData.username || user.displayName || 'User';
 
                     document.getElementById('user-display').innerText = `@${usernameDisplay}`;
+                    document.getElementById('top-avatar').innerText = userData.profilePic || '🎓';
                     const badge = document.getElementById('role-badge');
                     badge.innerText = userRole;
-                    badge.style.display = "inline-block";
+                    badge.style.display = 'inline-block';
 
-                    if (userRole === "student") {
+                    if (userRole === 'student') {
                         const banner = document.getElementById('warning-banner');
                         if (userData.warnings > 0) {
-                            banner.innerText = `⚠️ ATTENTION @${usernameDisplay}: You have received (${userData.warnings}) formal system warning(s). Please align your profile behavior.`;
-                            banner.style.display = "block";
+                            banner.innerText = `⚠️ You have ${userData.warnings} warning(s).`;
+                            banner.style.display = 'block';
                         } else {
-                            banner.style.display = "none";
+                            banner.style.display = 'none';
                         }
-                        document.getElementById('teacher-upgrade-anchor').style.display = "inline-flex";
-                        document.getElementById('teacher-zone').style.display = "none";
-                        document.getElementById('student-hub-zone').style.display = "block";
-                        
+                        document.getElementById('teacher-upgrade-anchor').style.display = 'inline-flex';
+                        document.getElementById('teacher-zone').style.display = 'none';
+                        document.getElementById('student-hub-zone').style.display = 'block';
                         listenToClassroomHubLive(userData.grade, userData.class, user.uid);
                     }
 
-                    if (userRole === "teacher") {
-                        document.getElementById('teacher-zone').style.display = "block";
-                        document.getElementById('student-hub-zone').style.display = "none";
-                        badge.style.backgroundColor = "var(--accent-green)";
-                        document.getElementById('teacher-upgrade-anchor').style.display = "none";
-                        
+                    if (userRole === 'teacher') {
+                        document.getElementById('teacher-zone').style.display = 'block';
+                        document.getElementById('student-hub-zone').style.display = 'none';
+                        badge.style.backgroundColor = 'var(--accent-green)';
+                        document.getElementById('teacher-upgrade-anchor').style.display = 'none';
                         const currentSelectionFilter = document.getElementById('teacher-matrix-filter-node').value;
                         listenToStudentProfilesLive(currentSelectionFilter);
                     }
 
                     document.getElementById('app-loading').style.display = 'none';
                 }, (error) => {
-                    console.error("Self layout stream capture failure:", error);
+                    console.error('Profile load error:', error);
                 });
 
             } else {
-                window.location.href = "/";
+                window.location.href = '/';
             }
         });
 
-        // FEATURE 1: CLASSROOM HUB SYSTEM REALTIME DATA STREAM (STUDENTS)
+        // CLASSROOM HUB (NO EMAILS)
         function listenToClassroomHubLive(grade, studentClass, selfUid) {
             if (studentPeerHubListenerCancel) studentPeerHubListenerCancel();
             
             const peersContainer = document.getElementById('peers-container');
-            document.getElementById('hub-title-node').innerText = `🏫 Classroom Peer Hub: Section ${studentClass} (${grade})`;
+            document.getElementById('hub-title-node').innerText = `🏫 ${grade} Section ${studentClass}`;
 
             const q = query(
-                collection(db, "users"), 
-                where("role", "==", "student"),
-                where("grade", "==", grade),
-                where("class", "==", studentClass)
+                collection(db, 'users'),
+                where('role', '==', 'student'),
+                where('grade', '==', grade),
+                where('class', '==', studentClass)
             );
 
             studentPeerHubListenerCancel = onSnapshot(q, (snapshot) => {
-                peersContainer.innerHTML = "";
-                let renderedPeerCount = 0;
+                peersContainer.innerHTML = '';
+                let count = 0;
 
                 snapshot.forEach((doc) => {
                     if (doc.id === selfUid) return;
-                    renderedPeerCount++;
+                    count++;
 
                     const data = doc.data();
-                    const pName = data.username || "Companion Node";
-                    const pEmail = data.email || "Hidden Security Domain";
+                    const pName = data.username || 'User';
                     const isOnline = data.isOnline === true;
-
                     const presenceClass = isOnline ? 'status-online' : 'status-offline';
                     const presenceText = isOnline ? 'Online' : 'Offline';
 
                     const row = document.createElement('div');
                     row.className = 'student-row';
-                    row.style.padding = '14px 20px';
+                    row.onclick = () => viewPublicProfile(doc.id);
                     row.innerHTML = `
                         <div class="student-name">
                             👤 @${pName}
                             <span class="status-pill ${presenceClass}"><span class="status-dot"></span>${presenceText}</span>
                         </div>
-                        <div style="font-size: 13px; color: var(--text-muted); font-family: monospace;">${pEmail}</div>
                     `;
                     peersContainer.appendChild(row);
                 });
 
-                if (renderedPeerCount === 0) {
-                    peersContainer.innerHTML = `<p style="color: var(--text-muted); font-style: italic; font-size: 14px;">No other peers found matching your section cluster index parameters yet.</p>`;
+                if (count === 0) {
+                    peersContainer.innerHTML = `<p style="color: var(--text-muted); font-style: italic;">No other peers in your class yet.</p>`;
                 }
-            }, (error) => {
-                console.error("Peer cluster processing loop dropped:", error);
             });
         }
 
@@ -485,326 +643,169 @@
             listenToStudentProfilesLive(e.target.value);
         });
 
-        // TEACHER SYSTEM ADMINISTRATIVE LISTENER ENGINE
-        function listenToStudentProfilesLive(classFilter = "All") {
+        // TEACHER ADMIN (EMAILS ONLY FOR ADMINS)
+        function listenToStudentProfilesLive(classFilter = 'All') {
             if (teacherMatrixListenerCancel) teacherMatrixListenerCancel();
             
             const container = document.getElementById('students-container');
-            let q = query(collection(db, "users"), where("role", "==", "student"));
+            let q = query(collection(db, 'users'), where('role', '==', 'student'));
             
-            if (classFilter !== "All") {
-                q = query(collection(db, "users"), where("role", "==", "student"), where("class", "==", classFilter));
+            if (classFilter !== 'All') {
+                q = query(collection(db, 'users'), where('role', '==', 'student'), where('class', '==', classFilter));
             }
 
             teacherMatrixListenerCancel = onSnapshot(q, (querySnapshot) => {
-                container.innerHTML = "";
+                container.innerHTML = '';
 
                 if (querySnapshot.empty) {
-                    container.innerHTML = "<p style='color: var(--text-muted); font-style: italic;'>No student logs register under this localized filter query path parameters.</p>";
+                    container.innerHTML = '<p style="color: var(--text-muted); font-style: italic;">No students found.</p>';
                     return;
                 }
 
                 querySnapshot.forEach((doc) => {
                     const data = doc.data();
                     const sUid = doc.id;
-                    const sName = data.username || "Unnamed Profile";
-                    const sEmail = data.email || "No Email Bound";
+                    const sName = data.username || 'Unknown';
+                    const sEmail = data.email || 'No Email';
                     const sWarnings = data.warnings || 0;
-                    const sGrade = data.grade || "Prep 2";
-                    const sClass = data.class || "Unassigned";
-                    
+                    const sGrade = data.grade || 'Prep 2';
+                    const sClass = data.class || 'Unassigned';
                     const isRestricted = data.isRestricted === true;
-                    const sStatusText = isRestricted ? "RESTRICTED" : "ACTIVE";
-                    
+                    const sStatusText = isRestricted ? 'RESTRICTED' : 'ACTIVE';
                     const isOnline = data.isOnline === true;
                     const presenceClass = isOnline ? 'status-online' : 'status-offline';
                     const presenceText = isOnline ? 'Online' : 'Offline';
 
                     const securityActionButton = isRestricted
                         ? `<button class="btn-ctrl btn-unrestrict" onclick="unrestrictAccessLive('${sUid}', '${sName}')">🔓 Unrestrict</button>`
-                        : `<button class="btn-ctrl btn-mute" onclick="restrictAccessLive('${sUid}', '${sName}')">🚫 Restrict Access</button>`;
+                        : `<button class="btn-ctrl btn-mute" onclick="restrictAccessLive('${sUid}', '${sName}')">🚫 Restrict</button>`;
 
                     const row = document.createElement('div');
                     row.className = 'student-row';
+                    row.style.cursor = 'default';
                     row.innerHTML = `
                         <div class="student-name">
                             <div>
                                 👤 @${sName} <span class="status-pill ${presenceClass}"><span class="status-dot"></span>${presenceText}</span>
-                                <div class="student-email">${sEmail} | Track Scope: <strong>${sGrade} [${sClass}]</strong></div>
-                                <div class="student-stats">Warnings logged: <strong>${sWarnings}</strong> | Security Status: <strong style="color: ${isRestricted ? 'var(--accent-red)' : 'var(--accent-green)'}">${sStatusText}</strong></div>
+                                <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">${sEmail} | ${sGrade} [${sClass}]</div>
+                                <div class="student-stats">Warnings: <strong>${sWarnings}</strong> | Status: <strong style="color: ${isRestricted ? 'var(--accent-red)' : 'var(--accent-green)'}">${sStatusText}</strong></div>
                             </div>
                         </div>
                         <div class="control-buttons">
-                            <button class="btn-ctrl btn-warn" onclick="issueWarningLive('${sUid}', '${sName}')">⚠️ Issue Warning</button>
+                            <button class="btn-ctrl btn-warn" onclick="issueWarningLive('${sUid}', '${sName}')">⚠️ Warn</button>
                             ${securityActionButton}
                         </div>
                     `;
                     container.appendChild(row);
                 });
-            }, (error) => {
-                console.error("Administrative matrix directory drop:", error);
             });
         }
 
-        function openSystemSettingsModal() {
-            if (!cachedUserData) return;
+        // PROFILE SAVE
+        document.getElementById('profile-save-btn').addEventListener('click', async () => {
+            const username = document.getElementById('profile-username-input').value.trim();
+            const about = document.getElementById('profile-about-input').value.trim();
+            const fileInput = document.getElementById('profile-pic-input');
+            const errorBanner = document.getElementById('profile-error-banner');
 
-            const modal = document.getElementById('settings-modal');
-            const usernameInput = document.getElementById('settings-username-input');
-            const studentFieldsBlock = document.getElementById('settings-student-fields');
-            const teacherFieldsBlock = document.getElementById('settings-teacher-fields');
-            const errorBanner = document.getElementById('settings-error-banner');
+            errorBanner.style.display = 'none';
 
-            errorBanner.innerText = "";
-            errorBanner.style.display = "none";
-            usernameInput.value = cachedUserData.username || "";
-
-            if (cachedUserData.role === "teacher") {
-                studentFieldsBlock.style.display = "none";
-                teacherFieldsBlock.style.display = "block";
-                
-                const currentMatrixValue = document.getElementById('teacher-matrix-filter-node').value;
-                document.getElementById('settings-faculty-default-scope').value = currentMatrixValue;
-            } else {
-                teacherFieldsBlock.style.display = "none";
-                studentFieldsBlock.style.display = "block";
-                document.getElementById('settings-grade-view').value = cachedUserData.grade || "Prep 2";
-                document.getElementById('settings-class-view').value = cachedUserData.class || "2/A";
+            if (!username) {
+                errorBanner.innerText = 'Username is required.';
+                errorBanner.style.display = 'block';
+                return;
             }
 
-            modal.classList.add('active');
+            try {
+                const updates = { username, username_lower: username.toLowerCase(), about };
 
-            document.getElementById('settings-save-btn').onclick = async () => {
-                const updatedUsername = usernameInput.value.trim();
-                if (!updatedUsername) {
-                    errorBanner.innerText = "Error: Username mapping sequence parameters cannot remain blank.";
-                    errorBanner.style.display = "block";
+                // Handle profile picture upload
+                if (fileInput.files[0]) {
+                    const file = fileInput.files[0];
+                    if (file.size > 2 * 1024 * 1024) {
+                        throw new Error('File too large (max 2MB)');
+                    }
+                    const storageRef = ref(storage, `profiles/${auth.currentUser.uid}`);
+                    await uploadBytes(storageRef, file);
+                    const url = await getDownloadURL(storageRef);
+                    updates.profilePicUrl = url;
+                }
+
+                await updateDoc(currentActiveUserRef, updates);
+                closeProfilePanel();
+            } catch(err) {
+                errorBanner.innerText = 'Error: ' + err.message;
+                errorBanner.style.display = 'block';
+            }
+        });
+
+        // SETTINGS SAVE
+        document.getElementById('settings-save-btn').addEventListener('click', async () => {
+            if (cachedUserData.role === 'teacher') {
+                const filterValue = document.getElementById('settings-faculty-default-scope').value;
+                document.getElementById('teacher-matrix-filter-node').value = filterValue;
+                listenToStudentProfilesLive(filterValue);
+            }
+            closeSettingsPanel();
+        });
+
+        // TEACHER VERIFICATION
+        window.openTeacherVerificationWizard = function() {
+            document.getElementById('form-teacher-user').value = '';
+            document.getElementById('form-teacher-code').value = '';
+
+            document.getElementById('portal-modal').classList.add('active');
+            document.getElementById('modal-title').innerText = '🛠️ Teacher Verification';
+            document.getElementById('modal-message').innerText = 'Enter your username and verification code.';
+            document.getElementById('modal-custom-form').style.display = 'flex';
+
+            document.getElementById('modal-confirm-btn').onclick = async () => {
+                const username = document.getElementById('form-teacher-user').value.trim();
+                const code = document.getElementById('form-teacher-code').value.trim();
+
+                if (!username || !code) {
+                    document.getElementById('modal-error-banner').style.display = 'block';
+                    document.getElementById('modal-error-banner').innerText = 'Both fields required.';
                     return;
                 }
 
                 try {
-                    const cleanLowerName = updatedUsername.toLowerCase();
-                    
-                    if (cleanLowerName !== cachedUserData.username_lower) {
-                        const checkQuery = query(collection(db, "users"), where("username_lower", "==", cleanLowerName));
-                        const checkSnap = await getDocs(checkQuery);
-                        
-                        let nameConflictDetected = false;
-                        checkSnap.forEach((doc) => {
-                            if (doc.id !== auth.currentUser.uid) nameConflictDetected = true;
-                        });
+                    const codeRef = doc(db, 'teacher_codes', code);
+                    const codeSnap = await getDoc(codeRef);
 
-                        if (nameConflictDetected) {
-                            errorBanner.innerText = "Error: That identity handle registry index is already locked by another account.";
-                            errorBanner.style.display = "block";
-                            return;
-                        }
+                    if (!codeSnap.exists() || !codeSnap.data().isValid) {
+                        throw new Error('Invalid code');
                     }
 
-                    const updatesMap = {
-                        username: updatedUsername,
-                        username_lower: cleanLowerName
-                    };
+                    await updateDoc(currentActiveUserRef, {
+                        username, username_lower: username.toLowerCase(), role: 'teacher'
+                    });
 
-                    if (cachedUserData.role === "teacher") {
-                        const filterSelectorNode = document.getElementById('settings-faculty-default-scope');
-                        document.getElementById('teacher-matrix-filter-node').value = filterSelectorNode.value;
-                        listenToStudentProfilesLive(filterSelectorNode.value);
-                    }
-
-                    await updateDoc(currentActiveUserRef, updatesMap);
-                    modal.classList.remove('active');
-
+                    document.getElementById('portal-modal').classList.remove('active');
                 } catch(err) {
-                    errorBanner.innerText = `Write Fault Protocol Error: ${err.message}`;
-                    errorBanner.style.display = "block";
+                    document.getElementById('modal-error-banner').style.display = 'block';
+                    document.getElementById('modal-error-banner').innerText = 'Error: ' + err.message;
                 }
             };
-
-            document.getElementById('settings-close-btn').onclick = () => {
-                modal.classList.remove('active');
-            };
-        }
-
-        function triggerPortalModal({ title, message, icon, confirmText, isDanger, showForm, showCancel, onConfirm }) {
-            const overlay = document.getElementById('portal-modal');
-            document.getElementById('modal-title').innerText = title;
-            document.getElementById('modal-message').innerText = message;
-            document.getElementById('modal-icon').innerText = icon || "ℹ️";
-            
-            const errBanner = document.getElementById('modal-error-banner');
-            errBanner.innerText = "";
-            errBanner.style.display = "none";
-            
-            const formContainer = document.getElementById('modal-custom-form');
-            formContainer.style.display = showForm ? "flex" : "none";
-            
-            const confirmBtn = document.getElementById('modal-confirm-btn');
-            confirmBtn.innerText = confirmText || "OK";
-            confirmBtn.className = isDanger ? "btn-modal btn-modal-confirm danger" : "btn-modal btn-modal-confirm";
-
-            const cancelBtn = document.getElementById('modal-cancel-btn');
-            cancelBtn.style.display = (showCancel === false) ? "none" : "inline-block";
-
-            overlay.classList.add('active');
-
-            confirmBtn.onclick = () => {
-                if (onConfirm) {
-                    onConfirm();
-                } else {
-                    overlay.classList.remove('active');
-                }
-            };
-            
-            cancelBtn.onclick = () => {
-                overlay.classList.remove('active');
-            };
-        }
-
-        function flashModalError(errorMessage) {
-            const banner = document.getElementById('modal-error-banner');
-            banner.innerText = errorMessage;
-            banner.style.display = "block";
-        }
-
-        window.openTeacherVerificationWizard = function() {
-            document.getElementById('form-teacher-user').value = "";
-            document.getElementById('form-teacher-code').value = "";
-
-            triggerPortalModal({
-                title: "Educator Clearance Registry",
-                message: "Please specify your preferred campus username and enter your unique verification authorization token key.",
-                icon: "🛠️",
-                confirmText: "Verify Identity",
-                showForm: true,
-                showCancel: true,
-                onConfirm: async () => {
-                    const chosenUsername = document.getElementById('form-teacher-user').value.trim();
-                    const enteredCode = document.getElementById('form-teacher-code').value.trim();
-
-                    if (!chosenUsername || !enteredCode) {
-                        flashModalError("Validation Error: Both input fields are mandatory.");
-                        return;
-                    }
-
-                    try {
-                        const codeVerificationRef = doc(db, "teacher_codes", enteredCode);
-                        const codeSnapshot = await getDoc(codeVerificationRef);
-
-                        if (!codeSnapshot.exists() || codeSnapshot.data().isValid !== true) {
-                            flashModalError("Access Denied: Invalid verification authorization code.");
-                            return;
-                        }
-
-                        const targetLowercaseName = chosenUsername.toLowerCase();
-                        const checkQuery = query(collection(db, "users"), where("username_lower", "==", targetLowercaseName));
-                        const duplicateCheckSnap = await getDocs(checkQuery);
-                        
-                        let isNameTaken = false;
-                        duplicateCheckSnap.forEach((userDoc) => {
-                            if (userDoc.id !== auth.currentUser.uid) {
-                                isNameTaken = true;
-                            }
-                        });
-
-                        if (isNameTaken) {
-                            flashModalError("Error: This username is already taken. Please choose another.");
-                            return;
-                        }
-
-                        await updateDoc(currentActiveUserRef, {
-                            username: chosenUsername,
-                            username_lower: targetLowercaseName, 
-                            role: "teacher"
-                        });
-                        
-                        document.getElementById('portal-modal').classList.remove('active');
-                        
-                        triggerPortalModal({
-                            title: "Clearance Level Upgraded",
-                            message: `Identity verified successfully. Welcome to the portal faculty, @${chosenUsername}!`,
-                            icon: "✅",
-                            confirmText: "Enter Portal",
-                            showCancel: false
-                        });
-                        
-                    } catch(err) {
-                        flashModalError(`Network Error: ${err.message}`);
-                    }
-                }
-            });
         };
 
         window.issueWarningLive = function(uid, username) {
-            triggerPortalModal({
-                title: "Confirm Disciplinary Warning",
-                message: `Are you sure you want to write an official system warning to @${username}'s active database token?`,
-                icon: "⚠️",
-                confirmText: "Issue Warning",
-                showCancel: true,
-                onConfirm: async () => {
-                    try {
-                        await updateDoc(doc(db, "users", uid), { warnings: increment(1) });
-                        document.getElementById('portal-modal').classList.remove('active');
-                        triggerPortalModal({ title: "Operation Complete", message: `Warning written to @${username} successfully!`, icon: "✅", showCancel: false });
-                    } catch (err) { 
-                        triggerPortalModal({ title: "Write Error", message: err.message, icon: "❌", showCancel: false });
-                    }
-                }
-            });
+            if (confirm(`Issue warning to @${username}?`)) {
+                updateDoc(doc(db, 'users', uid), { warnings: increment(1) }).catch(err => alert('Error: ' + err.message));
+            }
         };
 
         window.restrictAccessLive = function(uid, username) {
-            triggerPortalModal({
-                title: "CRITICAL: Restrict Student Profile",
-                message: `You are about to lock @${username} out of the portal ecosystem. This takes effect across all open tabs instantaneously.`,
-                icon: "🚫",
-                confirmText: "Execute Lockout",
-                isDanger: true,
-                showCancel: true,
-                onConfirm: async () => {
-                    try {
-                        await updateDoc(doc(db, "users", uid), { isRestricted: true });
-                        document.getElementById('portal-modal').classList.remove('active');
-                        triggerPortalModal({ title: "Access Revoked", message: `@${username} system account vector has been suspended.`, icon: "🔒", showCancel: false });
-                    } catch (err) { 
-                        triggerPortalModal({ title: "Write Error", message: err.message, icon: "❌", showCancel: false });
-                    }
-                }
-            });
+            if (confirm(`Restrict @${username}? They will be locked out immediately.`)) {
+                updateDoc(doc(db, 'users', uid), { isRestricted: true }).catch(err => alert('Error: ' + err.message));
+            }
         };
 
         window.unrestrictAccessLive = function(uid, username) {
-            triggerPortalModal({
-                title: "Lift Student Profile Restriction",
-                message: `Are you sure you want to restore workspace clearance coordinates for @${username}? They will be allowed access instantly.`,
-                icon: "🔓",
-                confirmText: "Lift Restriction",
-                showCancel: true,
-                onConfirm: async () => {
-                    try {
-                        await updateDoc(doc(db, "users", uid), { isRestricted: false });
-                        document.getElementById('portal-modal').classList.remove('active');
-                        triggerPortalModal({ title: "Clearance Granted", message: `@${username} has been successfully unrestricted.`, icon: "✅", showCancel: false });
-                    } catch (err) { 
-                        triggerPortalModal({ title: "Write Error", message: err.message, icon: "❌", showCancel: false });
-                    }
-                }
-            });
+            if (confirm(`Unrestrict @${username}?`)) {
+                updateDoc(doc(db, 'users', uid), { isRestricted: false }).catch(err => alert('Error: ' + err.message));
+            }
         };
-
-        function showLockoutScreen() {
-            document.body.innerHTML = `
-                <div class="lockout-screen">
-                    <div class="lockout-card">
-                        <div class="lockout-icon">🚫</div>
-                        <h1>Access Suspended</h1>
-                        <p style="color: #94a3b8; line-height: 1.6; font-size: 14px;">Your student access profile properties have been restricted by an administrator.</p>
-                        <button onclick="window.triggerLogoutLive()" class="btn-lockout-logout">Return to Login</button>
-                    </div>
-                </div>
-            `;
-        }
 
         function shutdownAllListenerStreams() {
             if (selfProfileListenerCancel) selfProfileListenerCancel();
@@ -812,57 +813,53 @@
             if (studentPeerHubListenerCancel) studentPeerHubListenerCancel();
         }
 
-        async function runGracefulSignOut() {
-            shutdownAllListenerStreams();
-            if (currentActiveUserRef) {
-                try { 
-                    await updateDoc(currentActiveUserRef, { isOnline: false }); 
-                } catch (e) {
-                    console.warn("Offline update failed:", e);
-                }
-            }
-            signOut(auth).then(() => { window.location.href = "/"; });
+        function showLockoutScreen() {
+            document.body.innerHTML = `
+                <div class="lockout-screen">
+                    <div class="lockout-card">
+                        <div class="lockout-icon">🚫</div>
+                        <h1>Access Suspended</h1>
+                        <p>Your account has been restricted by an administrator.</p>
+                        <button onclick="window.triggerLogoutLive()" class="btn-lockout-logout">Return to Login</button>
+                    </div>
+                </div>
+            `;
         }
 
-        window.triggerLogoutLive = runGracefulSignOut;
-        document.getElementById('logout-btn').addEventListener('click', runGracefulSignOut);
-        
-        // 🔥 FIX FOR OFFLINE BUG: Properly mark user as offline when leaving page
-        window.addEventListener('beforeunload', async () => { 
-            if (currentActiveUserRef) { 
-                try {
-                    // Use sendBeacon for better reliability on page unload
-                    navigator.sendBeacon = navigator.sendBeacon || function() {};
-                    await updateDoc(currentActiveUserRef, { isOnline: false });
-                } catch (e) {
-                    console.error("Failed to mark offline:", e);
-                }
-            } 
-        });
+        window.triggerLogoutLive = function() {
+            shutdownAllListenerStreams();
+            if (currentActiveUserRef) {
+                updateDoc(currentActiveUserRef, { isOnline: false }).catch(e => {});
+            }
+            signOut(auth).then(() => { window.location.href = '/'; });
+        };
 
-        // Also mark offline on visibility change (tab hidden/minimized)
+        document.getElementById('logout-btn').addEventListener('click', window.triggerLogoutLive);
+
+        // FIX: VISIBILITY CHANGE DETECTION (TAB FOCUS)
         document.addEventListener('visibilitychange', async () => {
-            if (document.hidden && currentActiveUserRef) {
+            if (currentActiveUserRef) {
+                const onlineStatus = !document.hidden;
                 try {
-                    await updateDoc(currentActiveUserRef, { isOnline: false });
+                    await updateDoc(currentActiveUserRef, { isOnline: onlineStatus });
                 } catch (e) {
-                    console.error("Visibility change offline update failed:", e);
+                    console.warn('Visibility update failed:', e);
                 }
             }
         });
 
-        // Mark offline on page unload
-        window.addEventListener('unload', async () => {
+        // FIX: PAGE UNLOAD
+        window.addEventListener('beforeunload', async () => {
             if (currentActiveUserRef) {
                 try {
                     await updateDoc(currentActiveUserRef, { isOnline: false });
                 } catch (e) {
-                    console.warn("Unload offline update failed");
+                    console.warn('Unload update failed');
                 }
             }
         });
 
-        // Heartbeat: Update online status every 30 seconds to keep fresh
+        // HEARTBEAT: Keep online status fresh every 30 seconds
         setInterval(async () => {
             if (currentActiveUserRef && !document.hidden) {
                 try {
@@ -871,7 +868,7 @@
                         lastSeen: new Date().toISOString()
                     });
                 } catch (e) {
-                    console.warn("Heartbeat update failed:", e);
+                    console.warn('Heartbeat failed:', e);
                 }
             }
         }, 30000);

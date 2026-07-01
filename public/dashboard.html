@@ -29,7 +29,7 @@
         .sidebar.collapsed .nav-item { padding: 12px 8px; justify-content: center; }
         .sidebar.collapsed .version-sidebar-stamp { display: none; }
         .sidebar.collapsed .teacher-upgrade-link { display: none; }
-        .sidebar.collapsed .btn-logout { padding: 8px; font-size: 11px; }
+        .sidebar.collapsed .btn-logout { display: none; }
 
         .sidebar-brand { font-size: 20px; font-weight: 800; margin-bottom: 40px; display: flex; align-items: center; justify-content: space-between; }
         .sidebar-brand .brand-text { white-space: nowrap; }
@@ -81,6 +81,13 @@
 
         #teacher-zone { display: none; background: #ffffff; border: 1px solid var(--border-color); border-radius: 16px; padding: 24px; margin-top: 32px; box-shadow: 0 4px 12px rgba(0,0,0,0.02); }
         #teacher-zone h2 { margin-top: 0; color: #0f172a; font-size: 22px; margin-bottom: 20px; }
+
+        #developer-zone { display: none; background: #1a1a2e; border: 2px solid #00d4ff; border-radius: 16px; padding: 24px; margin-top: 32px; box-shadow: 0 4px 12px rgba(0,212,255,0.2); }
+        #developer-zone h2 { margin-top: 0; color: #00d4ff; font-size: 22px; margin-bottom: 20px; font-family: monospace; }
+        .dev-command { background: #0f0f1e; border: 1px solid #00d4ff; padding: 12px; border-radius: 8px; margin-bottom: 12px; cursor: pointer; transition: all 0.2s; }
+        .dev-command:hover { background: #1a1a2e; box-shadow: 0 0 10px rgba(0,212,255,0.5); }
+        .dev-command-name { color: #00d4ff; font-weight: 700; font-family: monospace; }
+        .dev-command-desc { color: #64748b; font-size: 12px; margin-top: 4px; }
         
         .matrix-header-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
         .matrix-filter-select { padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 14px; color: var(--text-main); font-weight: 600; outline: none; background: white; cursor: pointer; }
@@ -98,7 +105,7 @@
         .status-online .status-dot { background: var(--accent-green); }
         .status-offline .status-dot { background: var(--text-muted); }
 
-        .control-buttons { display: flex; gap: 8px; }
+        .control-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
         .btn-ctrl { padding: 8px 14px; border: none; border-radius: 6px; font-weight: 600; font-size: 12px; cursor: pointer; transition: background 0.2s; }
         .btn-warn { background: #fef3c7; color: var(--accent-warning); }
         .btn-warn:hover { background: #fde68a; }
@@ -106,14 +113,13 @@
         .btn-mute:hover { background: #fecaca; }
         .btn-unrestrict { background: #d1fae5; color: #065f46; }
         .btn-unrestrict:hover { background: #a7f3d0; }
+        .btn-class { background: #dbeafe; color: #1e40af; }
+        .btn-class:hover { background: #bfdbfe; }
 
         .version-sidebar-stamp { font-size: 11px; font-weight: 600; color: #475569; font-family: monospace; margin-top: auto; margin-bottom: 4px; letter-spacing: 0.5px; user-select: none; }
         
         .teacher-upgrade-link { font-size: 12px; color: #64748b; text-decoration: none; font-weight: 600; margin-bottom: 16px; cursor: pointer; transition: color 0.2s; display: inline-flex; }
         .teacher-upgrade-link:hover { color: var(--accent-green); }
-
-        .btn-logout { background-color: transparent; color: #ef4444; border: 1px solid #fee2e2; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; text-align: left; transition: all 0.2s; }
-        .btn-logout:hover { background-color: #fef2f2; }
 
         /* Modals */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); display: flex; justify-content: center; align-items: center; visibility: hidden; opacity: 0; transition: all 0.3s; z-index: 1000; }
@@ -149,7 +155,6 @@
         .lockout-screen { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #0f172a; color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; }
         .lockout-card { background: #1e293b; padding: 40px; border-radius: 16px; border: 1px solid #334155; max-width: 450px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
         .lockout-icon { font-size: 64px; margin-bottom: 16px; }
-        .btn-lockout-logout { background: var(--accent-red); color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 20px; font-size: 16px; }
 
         @media (max-width: 768px) {
             .sidebar { position: fixed; left: 0; top: 0; height: 100vh; z-index: 99; }
@@ -165,7 +170,7 @@
         <div id="loading-status" style="color: #64748b; font-size: 14px; font-weight: 500; background: #e2e8f0; padding: 6px 16px; border-radius: 20px;">Initializing...</div>
     </div>
 
-    <!-- Profile View Modal -->
+    <!-- Profile View Modal (PUBLIC) -->
     <div id="profile-view-modal" class="modal-overlay">
         <div class="modal-box">
             <div class="profile-modal-content">
@@ -209,7 +214,7 @@
         </div>
     </div>
 
-    <!-- Profile Panel Modal -->
+    <!-- Profile Panel Modal (MY PROFILE) -->
     <div id="profile-modal" class="modal-overlay">
         <div class="modal-box">
             <div class="modal-title" style="text-align: center; margin-bottom: 16px;">👤 My Profile</div>
@@ -269,6 +274,30 @@
         </div>
     </div>
 
+    <!-- Change Student Class Modal (TEACHER) -->
+    <div id="change-class-modal" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-title" style="text-align: center; margin-bottom: 16px;">🔄 Change Student Class</div>
+            <div class="modal-custom-form">
+                <label>Student Name</label>
+                <input type="text" id="change-class-student-name" class="modal-field" disabled style="background: #f1f5f9; color: #64748b; cursor: not-allowed;">
+                
+                <label>New Class</label>
+                <select id="change-class-select" class="modal-field">
+                    <option value="2/A">Class 2/A</option>
+                    <option value="2/B">Class 2/B</option>
+                    <option value="2/C">Class 2/C</option>
+                    <option value="2/D">Class 2/D</option>
+                </select>
+            </div>
+            <div id="change-class-error-banner" class="modal-error-display"></div>
+            <div class="modal-actions" style="margin-top: 20px;">
+                <button class="btn-modal btn-modal-cancel" onclick="closeChangeClassModal()">Cancel</button>
+                <button id="change-class-confirm-btn" class="btn-modal btn-modal-confirm">Change Class</button>
+            </div>
+        </div>
+    </div>
+
     <div class="app-container">
         <nav class="sidebar" id="sidebar">
             <div class="sidebar-brand">
@@ -288,17 +317,13 @@
                     <span class="nav-item-icon">📢</span>
                     <span class="sidebar-text">Announcements</span>
                 </li>
-                <li class="nav-item" id="nav-link-settings" style="margin-top: 4px; border-top: 1px solid #334155; padding-top: 16px;" onclick="navigateTo('settings')">
-                    <span class="nav-item-icon">⚙️</span>
-                    <span class="sidebar-text">Settings</span>
-                </li>
             </ul>
             
-            <div class="version-sidebar-stamp" id="dashboard-version-node">v1.3.0</div>
+            <div class="version-sidebar-stamp" id="dashboard-version-node">v1.4.0</div>
             
             <div id="teacher-upgrade-anchor" class="teacher-upgrade-link" onclick="openTeacherVerificationWizard()">🛠️ I'm a Teacher</div>
             
-            <button id="logout-btn" class="btn-logout">Log Out</button>
+            <div id="dev-upgrade-anchor" class="teacher-upgrade-link" style="display: none; color: #00d4ff;">💻 Dev Console</div>
         </nav>
 
         <main class="main-content">
@@ -364,6 +389,35 @@
                         <p style="color: var(--text-muted); font-style: italic;">Loading students...</p>
                     </div>
                 </div>
+
+                <div id="developer-zone">
+                    <h2>⚡ Developer Console</h2>
+                    <p style="color: #64748b; margin-bottom: 20px;">Testing utilities for faster development.</p>
+                    <div class="dev-command" onclick="devMakeUserOnline()">
+                        <div class="dev-command-name">🟢 Force Online</div>
+                        <div class="dev-command-desc">Set yourself to online status</div>
+                    </div>
+                    <div class="dev-command" onclick="devMakeUserOffline()">
+                        <div class="dev-command-name">🔴 Force Offline</div>
+                        <div class="dev-command-desc">Set yourself to offline status</div>
+                    </div>
+                    <div class="dev-command" onclick="devAddWarning()">
+                        <div class="dev-command-name">⚠️ Add Warning</div>
+                        <div class="dev-command-desc">Add a warning to your account</div>
+                    </div>
+                    <div class="dev-command" onclick="devRemoveWarning()">
+                        <div class="dev-command-name">✅ Remove Warning</div>
+                        <div class="dev-command-desc">Remove a warning from your account</div>
+                    </div>
+                    <div class="dev-command" onclick="devRestrictSelf()">
+                        <div class="dev-command-name">🚫 Restrict Self</div>
+                        <div class="dev-command-desc">Restrict your own account (testing lockout)</div>
+                    </div>
+                    <div class="dev-command" onclick="devUnrestrictSelf()">
+                        <div class="dev-command-name">🔓 Unrestrict Self</div>
+                        <div class="dev-command-desc">Unrestrict your own account</div>
+                    </div>
+                </div>
             </div>
 
             <div id="section-classes" class="portal-section">
@@ -389,7 +443,7 @@
         import { getFirestore, doc, collection, query, where, onSnapshot, updateDoc, increment, setDoc, getDoc, getDocs } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-storage.js";
 
-        const APP_VERSION = "v1.3.0";
+        const APP_VERSION = "v1.4.0";
         
         const firebaseConfig = {
             apiKey: "AIzaSyDHBQ20Oan5NYyVbyf-0PMrIBGSNJKLYNY",
@@ -410,6 +464,7 @@
         let selfProfileListenerCancel = null;
         let teacherMatrixListenerCancel = null;
         let studentPeerHubListenerCancel = null;
+        let selectedStudentUidForClass = null;
 
         // SIDEBAR TOGGLE
         window.toggleSidebar = function() {
@@ -431,8 +486,7 @@
             const sections = {
                 overview: ['section-overview', 'nav-link-overview', 'Welcome Back', 'Portal ready.'],
                 classes: ['section-classes', 'nav-link-classes', '📚 Classes', 'Manage your courses.'],
-                announcements: ['section-announcements', 'nav-link-announcements', '📢 Announcements', 'Stay informed.'],
-                settings: ['section-settings', 'nav-link-settings', 'Settings', 'Manage your account.']
+                announcements: ['section-announcements', 'nav-link-announcements', '📢 Announcements', 'Stay informed.']
             };
 
             if (!sections[section]) return;
@@ -483,6 +537,10 @@
 
         window.closeProfileModal = function() {
             document.getElementById('profile-view-modal').classList.remove('active');
+        };
+
+        window.closeChangeClassModal = function() {
+            document.getElementById('change-class-modal').classList.remove('active');
         };
 
         window.viewPublicProfile = function(uid) {
@@ -557,10 +615,17 @@
                     document.getElementById('user-display').innerText = `@${usernameDisplay}`;
                     document.getElementById('top-avatar').innerText = userData.profilePic || '🎓';
                     const badge = document.getElementById('role-badge');
-                    badge.innerText = userRole;
+                    badge.innerText = userRole === 'developer' ? 'DEV' : userRole;
                     badge.style.display = 'inline-block';
 
-                    if (userRole === 'student') {
+                    if (userRole === 'developer') {
+                        badge.style.backgroundColor = '#00d4ff';
+                        document.getElementById('teacher-upgrade-anchor').style.display = 'none';
+                        document.getElementById('dev-upgrade-anchor').style.display = 'inline-flex';
+                        document.getElementById('developer-zone').style.display = 'block';
+                        document.getElementById('teacher-zone').style.display = 'none';
+                        document.getElementById('student-hub-zone').style.display = 'none';
+                    } else if (userRole === 'student') {
                         const banner = document.getElementById('warning-banner');
                         if (userData.warnings > 0) {
                             banner.innerText = `⚠️ You have ${userData.warnings} warning(s).`;
@@ -569,14 +634,14 @@
                             banner.style.display = 'none';
                         }
                         document.getElementById('teacher-upgrade-anchor').style.display = 'inline-flex';
+                        document.getElementById('developer-zone').style.display = 'none';
                         document.getElementById('teacher-zone').style.display = 'none';
                         document.getElementById('student-hub-zone').style.display = 'block';
                         listenToClassroomHubLive(userData.grade, userData.class, user.uid);
-                    }
-
-                    if (userRole === 'teacher') {
+                    } else if (userRole === 'teacher') {
                         document.getElementById('teacher-zone').style.display = 'block';
                         document.getElementById('student-hub-zone').style.display = 'none';
+                        document.getElementById('developer-zone').style.display = 'none';
                         badge.style.backgroundColor = 'var(--accent-green)';
                         document.getElementById('teacher-upgrade-anchor').style.display = 'none';
                         const currentSelectionFilter = document.getElementById('teacher-matrix-filter-node').value;
@@ -693,6 +758,7 @@
                         </div>
                         <div class="control-buttons">
                             <button class="btn-ctrl btn-warn" onclick="issueWarningLive('${sUid}', '${sName}')">⚠️ Warn</button>
+                            <button class="btn-ctrl btn-class" onclick="openChangeClassModal('${sUid}', '${sName}')">📝 Class</button>
                             ${securityActionButton}
                         </div>
                     `;
@@ -700,6 +766,27 @@
                 });
             });
         }
+
+        // CHANGE STUDENT CLASS
+        window.openChangeClassModal = function(uid, name) {
+            selectedStudentUidForClass = uid;
+            document.getElementById('change-class-student-name').value = name;
+            document.getElementById('change-class-modal').classList.add('active');
+        };
+
+        document.getElementById('change-class-confirm-btn').addEventListener('click', async () => {
+            const newClass = document.getElementById('change-class-select').value;
+            const errorBanner = document.getElementById('change-class-error-banner');
+            errorBanner.style.display = 'none';
+
+            try {
+                await updateDoc(doc(db, 'users', selectedStudentUidForClass), { class: newClass });
+                closeChangeClassModal();
+            } catch (err) {
+                errorBanner.innerText = 'Error: ' + err.message;
+                errorBanner.style.display = 'block';
+            }
+        });
 
         // PROFILE SAVE
         document.getElementById('profile-save-btn').addEventListener('click', async () => {
@@ -807,6 +894,57 @@
             }
         };
 
+        // DEVELOPER COMMANDS
+        window.devMakeUserOnline = function() {
+            if (currentActiveUserRef) {
+                updateDoc(currentActiveUserRef, { isOnline: true }).then(() => {
+                    alert('✅ Forced online');
+                });
+            }
+        };
+
+        window.devMakeUserOffline = function() {
+            if (currentActiveUserRef) {
+                updateDoc(currentActiveUserRef, { isOnline: false }).then(() => {
+                    alert('✅ Forced offline');
+                });
+            }
+        };
+
+        window.devAddWarning = function() {
+            if (currentActiveUserRef) {
+                updateDoc(currentActiveUserRef, { warnings: increment(1) }).then(() => {
+                    alert('⚠️ Warning added');
+                });
+            }
+        };
+
+        window.devRemoveWarning = function() {
+            if (currentActiveUserRef && cachedUserData.warnings > 0) {
+                updateDoc(currentActiveUserRef, { warnings: increment(-1) }).then(() => {
+                    alert('✅ Warning removed');
+                });
+            }
+        };
+
+        window.devRestrictSelf = function() {
+            if (currentActiveUserRef) {
+                updateDoc(currentActiveUserRef, { isRestricted: true }).then(() => {
+                    alert('🚫 Account restricted (testing lockout)');
+                    setTimeout(() => window.location.reload(), 1000);
+                });
+            }
+        };
+
+        window.devUnrestrictSelf = function() {
+            if (currentActiveUserRef) {
+                updateDoc(currentActiveUserRef, { isRestricted: false }).then(() => {
+                    alert('✅ Account unrestricted');
+                    setTimeout(() => window.location.reload(), 1000);
+                });
+            }
+        };
+
         function shutdownAllListenerStreams() {
             if (selfProfileListenerCancel) selfProfileListenerCancel();
             if (teacherMatrixListenerCancel) teacherMatrixListenerCancel();
@@ -820,7 +958,7 @@
                         <div class="lockout-icon">🚫</div>
                         <h1>Access Suspended</h1>
                         <p>Your account has been restricted by an administrator.</p>
-                        <button onclick="window.triggerLogoutLive()" class="btn-lockout-logout">Return to Login</button>
+                        <button onclick="window.triggerLogoutLive()" style="background: var(--accent-red); color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 20px; font-size: 16px;">Return to Login</button>
                     </div>
                 </div>
             `;
@@ -833,8 +971,6 @@
             }
             signOut(auth).then(() => { window.location.href = '/'; });
         };
-
-        document.getElementById('logout-btn').addEventListener('click', window.triggerLogoutLive);
 
         // FIX: VISIBILITY CHANGE DETECTION (TAB FOCUS)
         document.addEventListener('visibilitychange', async () => {
